@@ -1,1 +1,1 @@
-![Immagine](FOTO/DSC_0095.JPG)
+![Immagine](FOTO/DSC_0095.png)
