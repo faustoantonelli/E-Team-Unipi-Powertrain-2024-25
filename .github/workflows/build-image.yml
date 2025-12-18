@@ -32,8 +32,7 @@ jobs:
       - name: Build and push Docker image (multi-arch)
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: docker/dockerfile
+          context: ./docker/
           platforms: linux/amd64,linux/arm64
           push: true
           tags: |
