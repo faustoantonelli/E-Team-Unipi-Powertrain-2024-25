@@ -1,15 +1,21 @@
-FROM ubuntu:22.04
+FROM ubuntu:22.04 AS builder
+RUN apt-get update && apt-get install -y g++ --no-install-recommends
+COPY tester.cpp /build/tester.cpp
+RUN g++ -O3 /build/tester.cpp -o /engine
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        ca-certificates \
-        build-essential \
-        cmake \
-        git \
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    g++ valgrind python3 octave chktex cppcheck \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /work
-COPY . .
+COPY --from=builder /engine /usr/local/bin/engine
+RUN chmod +x /usr/local/bin/engine
 
-# Image provides the build environment only; CI builds/tests the project.
-CMD ["bash"]
+WORKDIR /github/workspace
+ENTRYPOINT ["engine"]
+# IMPORTANTE PER GITHUB ACTIONS:
+# GitHub monta il codice del repo in /github/workspace
+WORKDIR /github/workspace
+
+ENTRYPOINT ["engine"]

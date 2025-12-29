@@ -1,0 +1,44 @@
+name: Universal QA System
+
+on:
+  push:
+    paths:
+      - '**.cpp'
+      - '**.py'
+      - '**.m'
+      - '**.tex'
+
+jobs:
+  qa-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Codice
+        uses: actions/checkout@v4
+
+      - name: Build Engine
+        run: docker build -t qa-engine -f docker/Dockerfile .
+
+      - name: Run Engine su tutti i file
+        run: |
+          # 1. Prepariamo il file di log (vuoto all'inizio)
+          echo "--- REPORT QA GLOBALE ---" > qa_report.log
+          
+          # 2. Troviamo TUTTI i file validi (escludendo il tester e la cartella docker)
+          FILES=$(find . -maxdepth 1 -type f | grep -E '\.(cpp|py|m|tex)$' | grep -v "tester.cpp" | sed 's|./||')
+          
+          # 3. Ciclo per testarli uno ad uno
+          for file in $FILES; do
+            echo "------------------------------------------------"
+            echo "🚀 ANALISI IN CORSO SU: $file"
+            echo "------------------------------------------------"
+            
+            # Eseguiamo il container passandogli il nome del file corrente
+            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file"
+          done
+
+      - name: Upload Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-reports
+          path: qa_report.log
