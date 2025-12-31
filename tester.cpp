@@ -95,11 +95,20 @@ int main(int argc, char* const argv[]) {
     // --- SEZIONE CODICE (C++, Python, Octave) ---
     std::string run_cmd;
     if (ext == "cpp") {
-        if (std::system(("g++ -O3 " + target + " -o ./bin >/dev/null 2>&1").c_str()) != 0) {
-            write_log("Note: Errore Compilazione"); return 1;
-        }
-        run_cmd = "timeout 2s valgrind --leak-check=full --error-exitcode=1 ./bin";
-    } else if (ext == "py") {
+    // Troviamo la cartella che contiene il file .cpp attuale
+    size_t last_slash = target.find_last_of("/");
+    std::string include_path = (last_slash == std::string::npos) ? "." : target.substr(0, last_slash);
+
+    // Aggiungiamo -I per includere la cartella del file nei percorsi di ricerca
+    std::string compile_cmd = "g++ -O3 " + target + " -I " + include_path + " -o ./bin >/dev/null 2>&1";
+    
+    if (std::system(compile_cmd.c_str()) != 0) {
+        write_log("Note: Errore Compilazione (Verifica i tipi float/int o header mancanti)"); 
+        return 1;
+    }
+    run_cmd = "timeout 2s valgrind --leak-check=full --error-exitcode=1 ./bin";
+    }    
+    else if (ext == "py") {
         run_cmd = "timeout 2s python3 " + target;
     } else if (ext == "m") {
         run_cmd = "timeout 2s octave --no-gui --quiet " + target;
