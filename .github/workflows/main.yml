@@ -7,6 +7,7 @@ on:
       - '**.py'
       - '**.m'
       - '**.tex'
+  workflow_dispatch: # Permette di avviarlo anche manualmente per test
 
 jobs:
   qa-test:
@@ -16,18 +17,27 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Engine
-        run: docker build -t qa-engine -f docker/Dockerfile .
+        # Essendo il Dockerfile nella root, il comando è semplificato
+        run: docker build -t qa-engine -f Dockerfile .
 
       - name: Run Engine su tutti i file
         run: |
+          # 1. Inizializziamo il report
           echo "--- REPORT QA GLOBALE ---" > qa_report.log
-          
-          # Cerchiamo ricorsivamente tutti i file validi ignorando il tester e i file nascosti
-          # Il pipe verso 'while IFS=' è fondamentale per i nomi con spazi
-          find . -type f \( -name "*.cpp" -o -name "*.py" -o -name "*.m" -o -name "*.tex" \) -not -path "./tester.cpp" -not -path "*/.*" -print0 | while IFS= read -d '' -r file; do
+          echo "Data: $(date)" >> qa_report.log
+          echo "------------------------------------------------" >> qa_report.log
+        
+          # 2. Ricerca ricorsiva sicura
+          # Partiamo dalla cartella specifica. 
+          # -print0 insieme a 'read -d' gestisce perfettamente spazi e slash nel nome.
+          find "Traction Control 2025/26" -type f \( -name "*.cpp" -o -name "*.py" -o -name "*.m" -o -name "*.tex" \) -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
+            
             echo "🚀 ANALIZZANDO: $file"
-            # Quotiamo "$file" per proteggere gli spazi durante il passaggio al container
+            
+            # 3. Esecuzione Docker
+            # Passiamo "$file" tra virgolette per proteggere il percorso
             docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file"
+            
           done
 
       - name: Upload Report
