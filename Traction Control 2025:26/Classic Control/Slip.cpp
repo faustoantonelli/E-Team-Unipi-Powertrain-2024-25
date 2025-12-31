@@ -28,7 +28,7 @@ float Slip(float RLSpeed, float RRSpeed, float VehicleSpeed) {
     if (VehicleSpeed == 0) {
         float PercSlip = ((avgRearSpeed - THRESHOLD) * 100.0f) / THRESHOLD;
         
-        // Se lo slip supera la soglia, invia segnale di stacco potenza
+        // Se lo Slip supera la soglia, invia segnale di stacco potenza
         if (PercSlip > MAX_SLIP_STATIONARY) {
             return -1;  // Segnale: staccare potenza
         }
