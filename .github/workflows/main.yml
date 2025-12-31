@@ -22,17 +22,15 @@ jobs:
         run: |
           # 1. Prepariamo il file di log (vuoto all'inizio)
           echo "--- REPORT QA GLOBALE ---" > qa_report.log
-          
-          # 2. Troviamo TUTTI i file validi (escludendo il tester e la cartella docker)
-          # Trova i file in ogni sottocartella, escludendo tester.cpp e file nascosti
-          # Usiamo -not -path '*/.*' per evitare cartelle tipo .git
-          FILES=$(find "Traction Control 2025\26" -type f \( -name "*.cpp" -o -name "*.py" -o -name "*.m" -o -name "*.tex" \) -not -path "./tester.cpp" -not -path "*/.*")
-          
-          for file in $FILES; do
+        
+          # 2. Cerchiamo i file partendo dalla cartella specifica
+          # Usiamo -print0 e read -d '' per una sicurezza totale sui nomi file complessi
+          find "Traction Control 2025/26" -type f \( -name "*.cpp" -o -name "*.py" -o -name "*.m" -o -name "*.tex" \) -not -path "*/tester.cpp" -print0 | while list= read -d '' -r file; do
             echo "🚀 ANALIZZANDO: $file"
-            # Passiamo il percorso completo al container
+            # Fondamentale: "$file" tra virgolette per passare il percorso intero al container
             docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file"
           done
+       
 
           # 3. Ciclo per testarli uno ad uno
           for file in $FILES; do
