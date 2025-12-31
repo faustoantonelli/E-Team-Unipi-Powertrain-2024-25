@@ -24,7 +24,7 @@ jobs:
           echo "--- REPORT QA GLOBALE ---" > qa_report.log
           
           # 2. Troviamo TUTTI i file validi (escludendo il tester e la cartella docker)
-          FILES=$(find . -maxdepth 1 -type f | grep -E '\.(cpp|py|m|tex)$' | grep -v "tester.cpp" | sed 's|./||')
+          FILES=$(find . -type f | grep -E '\.(cpp|py|m|tex)$' | grep -v "tester.cpp" | sed 's|./||')
           
           # 3. Ciclo per testarli uno ad uno
           for file in $FILES; do
