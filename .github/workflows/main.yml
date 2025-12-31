@@ -22,21 +22,20 @@ jobs:
 
       - name: Run Engine su tutti i file
         run: |
-          # 1. Inizializziamo il report
           echo "--- REPORT QA GLOBALE ---" > qa_report.log
           echo "Data: $(date)" >> qa_report.log
           echo "------------------------------------------------" >> qa_report.log
-        
-          # 2. Ricerca ricorsiva sicura
-          # Partiamo dalla cartella specifica. 
-          # -print0 insieme a 'read -d' gestisce perfettamente spazi e slash nel nome.
-          find "Traction Control 2025/26" -type f \( -name "*.cpp" -o -name "*.py" -o -name "*.m" -o -name "*.tex" \) -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
+          
+          # Cerchiamo i file ovunque (.) per evitare problemi di nomi cartelle
+          # Il pipe '>> qa_report.log 2>&1' salva sia i risultati che gli errori
+          find . -type f \( -name "*.cpp" -o -name "*.py" -o -name "*.m" -o -name "*.tex" \) \
+          -not -path "*/tester.cpp" -not -path "*/.*" -print0 | while IFS= read -r -d '' file; do
             
-            echo "🚀 ANALIZZANDO: $file"
+            echo "------------------------------------------------" >> qa_report.log
+            echo "🚀 ANALIZZANDO: $file" >> qa_report.log
             
-            # 3. Esecuzione Docker
-            # Passiamo "$file" tra virgolette per proteggere il percorso
-            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file"
+            # Eseguiamo docker e reindirizziamo l'output nel file del report
+            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" >> qa_report.log 2>&1 || true
             
           done
 

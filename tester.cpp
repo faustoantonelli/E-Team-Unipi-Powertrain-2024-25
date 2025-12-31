@@ -10,8 +10,8 @@
 
 // Funzione per scrivere nel report senza sovrascrivere i test precedenti
 void write_log(const std::string& message) {
-    std::ofstream log_file("qa_report.log", std::ios::app);
-    if (log_file.is_open()) log_file << message << std::endl;
+    // Stampiamo direttamente a video (Standard Output)
+    std::cout << message << std::endl;
 }
 
 // Pulisce l'output da messaggi tecnici di sistema o Valgrind
