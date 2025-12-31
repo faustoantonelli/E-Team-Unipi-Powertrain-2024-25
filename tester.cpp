@@ -8,9 +8,8 @@
 #include <fstream>
 #include <algorithm>
 
-// Funzione per scrivere nel report senza sovrascrivere i test precedenti
+// MODIFICATO: Ora scrive su std::cout per essere catturato da GitHub Actions
 void write_log(const std::string& message) {
-    // Stampiamo direttamente a video (Standard Output)
     std::cout << message << std::endl;
 }
 
@@ -95,17 +94,17 @@ int main(int argc, char* const argv[]) {
     // --- SEZIONE CODICE (C++, Python, Octave) ---
     std::string run_cmd;
     if (ext == "cpp") {
-        size_t last_slash = target.find_last_of("/");
-        std::string include_path = (last_slash == std::string::npos) ? "." : target.substr(0, last_slash);
-
-        // AGGIUNTE VIRGOLETTE \" INTORNO A TARGET E INCLUDE_PATH
-        std::string compile_cmd = "g++ -O3 \"" + target + "\" -I \"" + include_path + "\" -o ./bin >/dev/null 2>&1";
-        
-        if (std::system(compile_cmd.c_str()) != 0) {
-            write_log("Note: Errore Compilazione (Verifica i tipi o header mancanti)"); 
-            return 1;
-        }
-        run_cmd = "timeout 2s valgrind --leak-check=full --error-exitcode=1 ./bin";
+    size_t last_slash = target.find_last_of("/");
+    std::string include_path = (last_slash == std::string::npos) ? "." : target.substr(0, last_slash);
+    
+    // Usiamo le virgolette per i percorsi con spazi
+    std::string compile_cmd = "g++ -O3 \"" + target + "\" -I \"" + include_path + "\" -o ./bin >/dev/null 2>&1";
+    
+    if (std::system(compile_cmd.c_str()) != 0) {
+        write_log("Note: Errore Compilazione (Manca il main o header non trovati)"); 
+        return 1;
+    }
+    run_cmd = "timeout 2s valgrind --leak-check=full --error-exitcode=1 ./bin";
     }
     else if (ext == "py") {
         run_cmd = "timeout 2s python3 " + target;

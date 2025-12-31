@@ -37,12 +37,14 @@ float Slip(float RLSpeed, float RRSpeed, float VehicleSpeed) {
     return PercSlip;
 }
 
-// AGGIUNGI QUESTO PER IL TESTER
+// AGGIUNGI QUESTO BLOCCO IN FONDO A SLIPEASY.CPP
 int main() {
-    float a, b, c;
-    // Il tester invia 3 numeri, noi li leggiamo e stampiamo il risultato
-    if (std::cin >> a >> b >> c) {
-        std::cout << Slip(a, b, c) << std::endl;
+    float rls, rrs, vs;
+    // Il tester invia 3 numeri (RLSpeed, RRSpeed, VehicleSpeed)
+    // Noi li leggiamo e stampiamo il risultato della tua funzione
+    while (std::cin >> rls >> rrs >> vs) {
+        float risultato = Slip(rls, rrs, vs);
+        std::cout << risultato << std::endl;
     }
     return 0;
 }
