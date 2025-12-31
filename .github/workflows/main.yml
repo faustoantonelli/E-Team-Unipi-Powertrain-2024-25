@@ -20,25 +20,13 @@ jobs:
 
       - name: Run Engine su tutti i file
         run: |
-          # 1. Prepariamo il file di log (vuoto all'inizio)
           echo "--- REPORT QA GLOBALE ---" > qa_report.log
-        
-          # 2. Cerchiamo i file partendo dalla cartella specifica
-          # Usiamo -print0 e read -d '' per una sicurezza totale sui nomi file complessi
-          find "Traction Control 2025/26" -type f \( -name "*.cpp" -o -name "*.py" -o -name "*.m" -o -name "*.tex" \) -not -path "*/tester.cpp" -print0 | while list= read -d '' -r file; do
+          
+          # Cerchiamo ricorsivamente tutti i file validi ignorando il tester e i file nascosti
+          # Il pipe verso 'while IFS=' è fondamentale per i nomi con spazi
+          find . -type f \( -name "*.cpp" -o -name "*.py" -o -name "*.m" -o -name "*.tex" \) -not -path "./tester.cpp" -not -path "*/.*" -print0 | while IFS= read -d '' -r file; do
             echo "🚀 ANALIZZANDO: $file"
-            # Fondamentale: "$file" tra virgolette per passare il percorso intero al container
-            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file"
-          done
-       
-
-          # 3. Ciclo per testarli uno ad uno
-          for file in $FILES; do
-            echo "------------------------------------------------"
-            echo "🚀 ANALISI IN CORSO SU: $file"
-            echo "------------------------------------------------"
-            
-            # Eseguiamo il container passandogli il nome del file corrente
+            # Quotiamo "$file" per proteggere gli spazi durante il passaggio al container
             docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file"
           done
 
