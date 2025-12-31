@@ -35,3 +35,13 @@ float Slip(float RLSpeed, float RRSpeed, float VehicleSpeed) {
     
     return PercSlip;
 }
+
+// AGGIUNGI QUESTO PER IL TESTER
+int main() {
+    float a, b, c;
+    // Il tester invia 3 numeri, noi li leggiamo e stampiamo il risultato
+    if (std::cin >> a >> b >> c) {
+        std::cout << Slip(a, b, c) << std::endl;
+    }
+    return 0;
+}
