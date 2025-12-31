@@ -26,13 +26,12 @@ jobs:
           # 2. Troviamo TUTTI i file validi (escludendo il tester e la cartella docker)
           # Trova i file in ogni sottocartella, escludendo tester.cpp e file nascosti
           # Usiamo -not -path '*/.*' per evitare cartelle tipo .git
-          FILES=$(find Traction\ Control\ 2025:26 -type f \( -name "*.cpp" -o -name "*.py" -o -name "*.m" -o -name "*.tex" \) -not -path "./tester.cpp" -not -path "*/.*")
+          FILES=$(find Traction\ Control\ 2025\26 -type f \( -name "*.cpp" -o -name "*.py" -o -name "*.m" -o -name "*.tex" \) -not -path "./tester.cpp" -not -path "*/.*")
           
           for file in $FILES; do
-            # Rimuoviamo il prefisso ./ per passare il percorso pulito al container
-            TARGET_PATH=$(echo $file | sed 's|^\./||')
-            echo "🚀 ANALISI IN CORSO SU: $TARGET_PATH"
-            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$TARGET_PATH"
+            echo "🚀 ANALIZZANDO: $file"
+            # Passiamo il percorso completo al container
+            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file"
           done
 
           # 3. Ciclo per testarli uno ad uno
