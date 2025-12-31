@@ -1,5 +1,6 @@
 #include "Slip.h"
 #include "VehicleSpeed.h"
+#include <iostream>
 
 // Definizioni costanti
 #define MAX_SLIP_STATIONARY 20.0f   // Soglia slip massimo per allarme stacco potenza (%)
