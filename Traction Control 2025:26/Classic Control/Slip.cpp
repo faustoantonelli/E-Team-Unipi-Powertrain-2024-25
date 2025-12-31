@@ -20,8 +20,7 @@ float Slip(float RLSpeed, float RRSpeed, float VehicleSpeed) {
     if (RLSpeed < 0 || RRSpeed < 0 || VehicleSpeed < 0) {
         return 0;
     }
-    
-    // Calcola la velocità media delle ruote posteriori
+    // Calcola la Velocità Media delle ruote posteriori
     float avgRearSpeed = (RLSpeed + RRSpeed) / 2.0f;
     
     // A macchina ferma: normalizza rispetto ai 2 giri massimi
