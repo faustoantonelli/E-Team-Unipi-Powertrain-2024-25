@@ -1,96 +1,134 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <iomanip> // Per la formattazione della tabella
+#include <iomanip>
+#include <cstdlib>
+#include <ctime>
+#include <sstream>
+#include <fstream>
 
 using namespace std;
 
-// Struttura per memorizzare i risultati di ogni test
+// Struttura per l'Artifact
 struct TestResult {
-    int id;
-    string nome;
-    bool superato;
+    string id;
+    string input;
+    string stato;
     string dettagli;
 };
 
 class Tester {
 private:
     vector<TestResult> risultati;
+    string target;
+    string ext;
+    int num_vars;
+    string run_cmd;
 
-    void aggiungiRisultato(int id, string nome, bool esito, string note = "") {
-        risultati.push_back({id, nome, esito, note});
+    string get_ext(const string& f) {
+        size_t pos = f.find_last_of(".");
+        return (pos == string::npos) ? "" : f.substr(pos);
+    }
+
+    // Il tuo generatore specifico richiesto
+    string generate_random_input(int vars) {
+        stringstream ss;
+        for (int i = 0; i < vars; ++i) {
+            double r = (rand() % 20001 - 10000) / 100.0; // Formula richiesta
+            ss << fixed << setprecision(2) << r << (i == vars - 1 ? "" : " ");
+        }
+        return ss.str();
     }
 
 public:
-    // --- Simulazione dei 10 Test ---
-    
-    void eseguiTuttiITests() {
-        // Test 1: Inizializzazione
-        aggiungiRisultato(1, "Inizializzazione Core", true, "Sistema pronto");
-
-        // Test 2: Caricamento File
-        aggiungiRisultato(2, "Caricamento Header", true);
-
-        // Test 3: Allocazione Memoria
-        aggiungiRisultato(3, "Allocazione Buffer", true);
-
-        // Test 4: Parsing Logica
-        // Esempio di test fallito per testare la leggibilità
-        aggiungiRisultato(4, "Parsing Logica", false, "Errore sintassi riga 12");
-
-        // Test 5: Connessione Moduli
-        aggiungiRisultato(5, "Linker Moduli", true);
-
-        // Test 6: Validazione Puntatori
-        aggiungiRisultato(6, "Check Puntatori", true);
-
-        // Test 7: Calcolo Matematico
-        aggiungiRisultato(7, "Algoritmo Principale", true);
-
-        // Test 8: Gestione Eccezioni
-        aggiungiRisultato(8, "Try-Catch Block", true);
-
-        // Test 9: Pulizia Cache
-        aggiungiRisultato(9, "Svuotamento Cache", true);
-
-        // Test 10: Chiusura Processi
-        aggiungiRisultato(10, "Terminazione Safe", true);
+    Tester(string t, int vars) : target(t), num_vars(vars) {
+        ext = get_ext(target);
+        srand(time(0));
     }
 
-    void generaArtifact() {
-        cout << "\n" << string(80, '=') << endl;
-        cout << "                ARTIFACT - REPORT FINALE DI COLLAUDO" << endl;
-        cout << string(80, '=') << endl;
+    // 1. ANALISI STATICA (Cppcheck o ChkTex)
+    void eseguiAnalisiStatica() {
+        if (ext == ".cpp") {
+            int res = system(("cppcheck --enable=all --error-exitcode=1 " + target + " >/dev/null 2>&1").c_str());
+            risultati.push_back({"STATIC", "Analisi Cppcheck", (res == 0 ? "✅ OK" : "⚠️ WARN"), "Controllo statico"});
+        } else if (ext == ".tex") {
+            int res = system(("chktex -q -n16 " + target + " >/dev/null 2>&1").c_str());
+            risultati.push_back({"STATIC", "Analisi LaTeX", (res == 0 ? "✅ OK" : "❌ FAIL"), "Check chktex"});
+        }
+    }
 
-        // Intestazione Tabella
-        cout << left << setw(4)  << "ID" 
-             << " | " << setw(25) << "NOME DEL TEST" 
-             << " | " << setw(12) << "STATO" 
-             << " | " << "DETTAGLI / NOTE" << endl;
-        cout << string(80, '-') << endl;
+    // 2. PREPARAZIONE AMBIENTE (Compilazione e Valgrind)
+    bool preparaEsecuzione() {
+        if (ext == ".cpp") {
+            if (system(("g++ -O3 " + target + " -o ./bin_test >/dev/null 2>&1").c_str()) != 0) {
+                risultati.push_back({"BUILD", "Compilazione", "❌ FAIL", "g++ error"});
+                return false;
+            }
+            run_cmd = "valgrind --leak-check=full --error-exitcode=1 ./bin_test";
+        } else if (ext == ".py") {
+            run_cmd = "python3 " + target;
+        } else if (ext == ".m") {
+            run_cmd = "octave --quiet --no-gui " + target;
+        } else {
+            return false; // Per i .tex l'analisi finisce allo statico
+        }
+        return true;
+    }
 
-        // Righe della Tabella
-        for (const auto& res : risultati) {
-            string statoStr = res.superato ? " [ OK ] " : "![FAIL]!";
+    // 3. I 10 INPUT CASUALI
+    void esegui10Test() {
+        for (int i = 1; i <= 10; ++i) {
+            string input_data = generate_random_input(num_vars);
+            string full_cmd = "echo \"" + input_data + "\" | " + run_cmd + " >/dev/null 2>&1";
             
-            cout << left << setw(4)  << res.id 
-                 << " | " << setw(25) << res.nome 
-                 << " | " << setw(12) << statoStr 
+            int status = system(full_cmd.c_str());
+            
+            string stato = (status == 0) ? "✅ PASS" : "❌ FAIL";
+            string nota = (status == 0) ? "Test superato" : "Crash o Leak";
+            
+            risultati.push_back({"T" + to_string(i), input_data, stato, nota});
+            if (status != 0) break; 
+        }
+        system("rm -f ./bin_test");
+    }
+
+    // 4. GENERAZIONE ARTIFACT VISIVO
+    void generaArtifact() {
+        cout << "\n" << string(90, '=') << endl;
+        cout << "                ARTIFACT - REPORT FINALE DI COLLAUDO" << endl;
+        cout << " TARGET: " << target << endl;
+        cout << string(90, '=') << endl;
+
+        cout << left << setw(8)  << "ID" 
+             << " | " << setw(28) << "INPUT / OPERAZIONE" 
+             << " | " << setw(10) << "STATO" 
+             << " | " << "DETTAGLI" << endl;
+        cout << string(90, '-') << endl;
+
+        for (const auto& res : risultati) {
+            cout << left << setw(8)  << res.id 
+                 << " | " << setw(28) << res.input 
+                 << " | " << setw(10) << res.stato 
                  << " | " << res.dettagli << endl;
         }
-
-        cout << string(80, '-') << endl;
-        cout << " Fine del report." << endl << endl;
+        cout << string(90, '=') << endl << endl;
     }
 };
 
-int main() {
-    Tester mioTester;
-    
-    cout << "Avvio della suite di test in corso..." << endl;
-    
-    mioTester.eseguiTuttiITests();
-    mioTester.generaArtifact();
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        cerr << "Uso: ./tester <file> [num_vars]" << endl;
+        return 1;
+    }
+
+    int vars = (argc >= 3) ? stoi(argv[2]) : 3;
+    Tester engine(argv[1], vars);
+
+    engine.eseguiAnalisiStatica();
+    if (engine.preparaEsecuzione()) {
+        engine.esegui10Test();
+    }
+    engine.generaArtifact();
 
     return 0;
 }
