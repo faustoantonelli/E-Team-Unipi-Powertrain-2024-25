@@ -17,24 +17,24 @@ jobs:
           DOCKER_PATH=$(find . -name Dockerfile -print -quit)
           docker build -t qa-engine -f "$DOCKER_PATH" .
 
-      - name: Run Engine su tutti i file
+      - name: Run Analysis
         run: |
-          echo "--- REPORT QA GLOBALE ---" > qa_report.log
+          # Creiamo l'intestazione del log
+          echo "==========================================" > qa_report.log
+          echo "       REPORT QA AUTOMOTIVE SYSTEM       " >> qa_report.log
           echo "Data: $(date)" >> qa_report.log
-          echo "Cartella target: Traction Control 2025-26" >> qa_report.log
-          echo "------------------------------------------------" >> qa_report.log
+          echo "==========================================" >> qa_report.log
           
-          # Cerchiamo i file nella nuova cartella rinominata
-          # Usiamo le virgolette per gestire lo spazio nel nome
-          find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.py" -o -name "*.m" -o -name "*.tex" \) \
+          # Cerchiamo i file gestendo gli SPAZI nel nome
+          # Cerchiamo sia .cpp che .tex (puoi aggiungere .py o .m se servono)
+          find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.tex" \) \
           -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
             
-            echo "------------------------------------------------" >> qa_report.log
-            echo "🚀 ANALIZZANDO: $file" >> qa_report.log
+            echo "🚀 Analisi in corso su: $file"
             
-            # Eseguiamo docker e salviamo l'output (stdout + stderr) direttamente nel log
-            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" >> qa_report.log 2>&1 || true
-            
+            # Eseguiamo il container. 
+            # Il volume mount permette a tester.cpp di scrivere direttamente in qa_report.log
+            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file"
           done
 
       - name: Upload Report

@@ -11,6 +11,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # 1. Aggiungiamo i pacchetti raccomandati per LaTeX e le Locales per gli accenti
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    cppcheck \
     g++ \
     valgrind \
     python3 \
