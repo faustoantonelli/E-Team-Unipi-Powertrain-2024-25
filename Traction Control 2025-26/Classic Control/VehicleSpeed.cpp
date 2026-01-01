@@ -1,8 +1,13 @@
 #include "VehicleSpeed.h"
 
-// Questa funzione verrà "chiamata" dal main che sta in un altro file
+// Questa funzione restituisce sempre 100.0f come richiesto
 float VehicleSpeed(float FLSpeed, float FRSpeed, float Ax, float Ay, float Az) {
-    // Diciamo al compilatore di ignorare che non usiamo questi dati
-    (void)FLSpeed; (void)FRSpeed; (void)Ax; (void)Ay; (void)Az;
-    return 100.0f; // Restituisce sempre 100
+    // Diciamo al compilatore che sappiamo di non usare questi dati
+    (void)FLSpeed; 
+    (void)FRSpeed; 
+    (void)Ax; 
+    (void)Ay; 
+    (void)Az;
+    
+    return 100.0f; 
 }
