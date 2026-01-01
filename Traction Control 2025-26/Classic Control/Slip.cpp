@@ -1,43 +1,49 @@
-#include "Slip.h"
+#include <iostream>
 #include "VehicleSpeed.h"
 
 // Definizioni costanti
-#define THRESHOLD 5.0f              // Soglia minima velocità ruota (giri)
-#define MAX_SLIP_STATIONARY 20.0f   // Soglia slip massimo a macchina ferma (%)
-#define MIN_VEHICLE_SPEED 5.0f      // Velocità minima veicolo per evitare divisioni critiche
+#define THRESHOLD 5.0f              
+#define MAX_SLIP_STATIONARY 20.0f   
+#define MIN_VEHICLE_SPEED 5.0f      
 
-/**
- * @brief Calcola il percentuale di slip delle ruote posteriori
- * @param RLSpeed Velocità ruota posteriore sinistra (giri)
- * @param RRSpeed Velocità ruota posteriore destra (giri)
- * @param VehicleSpeed Velocità del veicolo (m/s o unità equivalente)
- * @return Percentuale di slip, o -1 se slip > MAX_SLIP_STATIONARY a macchina ferma (segnale stacco potenza)
- */
-
-float Slip(float RLSpeed, float RRSpeed, float VehicleSpeed) {
+int main() {
+    float FLSpeed, FRSpeed, RLSpeed, RRSpeed, Ax, Ay, Az;
     
-    // Validazione input: ignora velocità negative
-    if (RLSpeed < 0 || RRSpeed < 0 || VehicleSpeed < 0) {
-        return 0;
-    }
-    // Calcola la Velocità Media delle ruote posteriori
-    float avgRearSpeed = (RLSpeed + RRSpeed) / 2.0f;
-    
-    // A macchina ferma: normalizza rispetto ai 2 giri massimi
-    if (VehicleSpeed == 0) {
-        float PercSlip = ((avgRearSpeed - THRESHOLD) * 100.0f) / THRESHOLD;
+    // Il ciclo legge i dati finché ce ne sono
+    while (std::cin >> FLSpeed >> FRSpeed >> RLSpeed >> RRSpeed >> Ax >> Ay >> Az) {
         
-        // Se lo Slip supera la soglia, invia segnale di stacco potenza
-        if (PercSlip > MAX_SLIP_STATIONARY) {
-            return -1;  // Segnale: staccare potenza
+        // 1. Calcola velocità veicolo (usiamo vSpeed per non confonderlo con la funzione)
+        float vSpeed = VehicleSpeed(FLSpeed, FRSpeed, Ax, Ay, Az);
+        
+        // 2. Validazione input
+        if (RLSpeed < 0 || RRSpeed < 0 || vSpeed < 0) {
+            std::cout << 0.0f << std::endl;
+            continue;
         }
+
+        // 3. Calcola la Velocità Media delle ruote posteriori
+        float avgRearSpeed = (RLSpeed + RRSpeed) / 2.0f;
         
-        return PercSlip;
-    }
-    
-    float RefSpeed = (VehicleSpeed < MIN_VEHICLE_SPEED) ? MIN_VEHICLE_SPEED : VehicleSpeed;
-    // A macchina in movimento: calcolo percentuale classico
-    float PercSlip = ((avgRearSpeed - VehicleSpeed) * 100.0f) / RefSpeed;
-    
-    return PercSlip;
+        // 4. Calcolo dello Slip
+        float currentSlip = 0.0f;
+
+        if (vSpeed == 0) {
+            // A macchina ferma
+            currentSlip = ((avgRearSpeed - THRESHOLD) * 100.0f) / THRESHOLD;
+        } else {
+            // A macchina in movimento (con protezione divisione per zero)
+            float refForDivision = (vSpeed < MIN_VEHICLE_SPEED) ? MIN_VEHICLE_SPEED : vSpeed;
+            currentSlip = ((avgRearSpeed - vSpeed) * 100.0f) / refForDivision;
+        }
+
+        // 5. Logica di controllo potenza
+        if (vSpeed == 0 && currentSlip > MAX_SLIP_STATIONARY) {
+            std::cout << -1 << std::endl; // Segnale stacco potenza
+        } else {
+            // Se lo slip è negativo (frenata), stampiamo 0
+            std::cout << (currentSlip < 0 ? 0 : currentSlip) << std::endl;
+        }
+    } // Fine while
+
+    return 0;
 }

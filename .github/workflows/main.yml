@@ -17,23 +17,16 @@ jobs:
           DOCKER_PATH=$(find . -name Dockerfile -print -quit)
           docker build -t qa-engine -f "$DOCKER_PATH" .
 
-      - name: Run Analysis
+      - name: Run Engine su tutti i file
         run: |
-          # Creiamo l'intestazione del log
-          echo "==========================================" > qa_report.log
-          echo "       REPORT QA AUTOMOTIVE SYSTEM       " >> qa_report.log
-          echo "Data: $(date)" >> qa_report.log
-          echo "==========================================" >> qa_report.log
+          echo "--- REPORT QA GLOBALE ---" > qa_report.log
           
-          # Cerchiamo i file gestendo gli SPAZI nel nome
-          # Cerchiamo sia .cpp che .tex (puoi aggiungere .py o .m se servono)
+          # Cerchiamo i file usando -print0 per gestire i nomi con SPAZI
           find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.tex" \) \
           -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
             
-            echo "🚀 Analisi in corso su: $file"
-            
-            # Eseguiamo il container. 
-            # Il volume mount permette a tester.cpp di scrivere direttamente in qa_report.log
+            echo "🚀 Analizzando: $file"
+            # Eseguiamo docker. Il file qa_report.log viene aggiornato dal tester dentro il container
             docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file"
           done
 
@@ -41,5 +34,5 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: qa-reports
+          name: QA-Automotive-Report
           path: qa_report.log
