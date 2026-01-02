@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
-#include <chrono>   // <--- AGGIUNTO: Libreria per il tempo
+#include <chrono>
 #include <iomanip>
 #include <cstdlib>
 #include <ctime>
@@ -11,12 +11,7 @@
 using namespace std;
 
 struct TestResult {
-    string id; 
-    string input; 
-    string output; 
-    string stato; 
-    string tempo;    // <--- AGGIUNTO: Campo per la latenza
-    string dettagli;
+    string id; string input; string output; string stato; string tempo; string dettagli;
 };
 
 class Tester {
@@ -46,25 +41,24 @@ public:
     void eseguiAnalisiStatica() {
         if (is_file_empty(target)) return;
         string cmd = "cppcheck --enable=all --error-exitcode=1 \"" + target + "\" >/dev/null 2>&1";
-        int res = system(cmd.c_str());
-        if (res == 0) risultati.push_back({"STATIC", "Cppcheck", "-", "✅ PASS", "-", "Nessun problema"});
-        else risultati.push_back({"STATIC", "Cppcheck", "-", "⚠️ WARN", "-", "Possibili bug"});
+        if (system(cmd.c_str()) == 0) 
+            risultati.push_back({"STATIC", "Cppcheck", "-", "✅ PASS", "-", "Nessun problema"});
+        else 
+            risultati.push_back({"STATIC", "Cppcheck", "-", "⚠️ WARN", "-", "Possibili bug"});
     }
 
     void eseguiTestDinamici() {
         if (is_file_empty(target)) return;
-
         string compile_cmd = "g++ -O3 \"" + target + "\" -o ./bin_test >/dev/null 2>&1";
         if (system(compile_cmd.c_str()) != 0) return;
 
         for (int i = 1; i <= 10; ++i) {
             string in_data = generate_random_input(num_vars);
             string cmd = "echo \"" + in_data + "\" | ./bin_test";
-            
             char buffer[128];
             string out_data = "";
 
-            // --- INIZIO MISURAZIONE TEMPO ---
+            // --- INIZIO MISURAZIONE ---
             auto start = chrono::high_resolution_clock::now(); 
 
             FILE* pipe = popen(cmd.c_str(), "r");
@@ -72,10 +66,16 @@ public:
                 if (fgets(buffer, sizeof(buffer), pipe) != NULL) out_data = buffer;
                 int status = pclose(pipe);
 
-                // --- FINE MISURAZIONE TEMPO ---
+                // --- FINE MISURAZIONE ---
                 auto end = chrono::high_resolution_clock::now();
-                auto duration = chrono::duration_cast<chrono::microseconds>(end - start);
                 
+                // Calcoliamo la durata in secondi (usando double per i decimali)
+                chrono::duration<double> elapsed_seconds = end - start;
+                
+                // Formattiamo il tempo con 6 cifre decimali
+                stringstream ss_time;
+                ss_time << fixed << setprecision(6) << elapsed_seconds.count() << " s";
+
                 if (!out_data.empty() && out_data.back() == '\n') out_data.pop_back();
                 
                 risultati.push_back({
@@ -83,7 +83,7 @@ public:
                     in_data, 
                     (out_data.empty() ? "0" : out_data), 
                     (status == 0 ? "✅ PASS" : "❌ FAIL"), 
-                    to_string(duration.count()) + " us", // Salva i microsecondi
+                    ss_time.str(), // Ora salvato come "0.002430 s"
                     "Test dinamico"
                 });
             }
@@ -96,13 +96,12 @@ public:
         cout << "                                ARTIFACT - REPORT FINALE DI COLLAUDO\n";
         cout << " TARGET: " << target << "\n";
         cout << "========================================================================================================\n";
-        // Aggiunta la colonna LATENZA nell'intestazione
         cout << left << setw(8) << "ID" << " | " << setw(35) << "OPERAZIONE" << " | " << setw(15) << "OUTPUT" 
-             << " | " << setw(10) << "STATO" << " | " << setw(12) << "LATENZA" << " | " << "DETTAGLI" << endl;
+             << " | " << setw(10) << "STATO" << " | " << setw(15) << "TEMPO (s)" << " | " << "DETTAGLI" << endl;
         cout << "--------------------------------------------------------------------------------------------------------\n";
         for (auto& r : risultati) {
             cout << left << setw(8) << r.id << " | " << setw(35) << r.input << " | " << setw(15) << r.output 
-                 << " | " << setw(10) << r.stato << " | " << setw(12) << r.tempo << " | " << r.dettagli << endl;
+                 << " | " << setw(10) << r.stato << " | " << setw(15) << r.tempo << " | " << r.dettagli << endl;
         }
         cout << "========================================================================================================\n";
     }
