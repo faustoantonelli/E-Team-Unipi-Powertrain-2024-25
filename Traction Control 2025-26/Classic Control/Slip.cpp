@@ -1,10 +1,15 @@
 #include <iostream>
-#include "VehicleSpeed.h"
 
-// Definizioni costanti
+// Definizioni costanti (lasciate come le avevi)
 #define THRESHOLD 5.0f              
 #define MAX_SLIP_STATIONARY 20.0f   
 #define MIN_VEHICLE_SPEED 5.0f      
+
+// La tua funzione VehicleSpeed
+float VehicleSpeed(float FLSpeed, float FRSpeed, float Ax, float Ay, float Az) {
+    // Implementazione che presumo tu abbia già
+    return (FLSpeed + FRSpeed) / 2.0f; // Esempio placeholder
+}
 
 int main() {
     float FLSpeed, FRSpeed, RLSpeed, RRSpeed, Ax, Ay, Az;
@@ -29,20 +34,22 @@ int main() {
 
         if (vSpeed == 0) {
             // A macchina ferma
-            currentSlip = ((avgRearSpeed - THRESHOLD) * 100.0f) / THRESHOLD;
+            if (avgRearSpeed > THRESHOLD) {
+                currentSlip = ((avgRearSpeed - THRESHOLD) * 100.0f) / THRESHOLD;
+            }
         } else {
             // A macchina in movimento (con protezione divisione per zero)
             float refForDivision = (vSpeed < MIN_VEHICLE_SPEED) ? MIN_VEHICLE_SPEED : vSpeed;
             currentSlip = ((avgRearSpeed - vSpeed) * 100.0f) / refForDivision;
         }
 
-        // 5. Logica di controllo potenza
-        //if (vSpeed == 0 && currentSlip > MAX_SLIP_STATIONARY) {
-        //    std::cout << -1 << std::endl; // Segnale stacco potenza
-        //} else {
-        //    // Se lo slip è negativo (frenata), stampiamo 0
-        //    std::cout << (currentSlip < 0 ? 0 : currentSlip) << std::endl;
-        //}
+        // 5. Logica di controllo potenza - MODIFICATA
+        if (vSpeed == 0 && currentSlip > MAX_SLIP_STATIONARY) {
+            std::cout << -1 << std::endl; // Segnale stacco potenza
+        } else {
+            // Stampiamo TUTTI gli slip, anche quelli negativi
+            std::cout << currentSlip << std::endl;
+        }
     } // Fine while
 
     return 0;
