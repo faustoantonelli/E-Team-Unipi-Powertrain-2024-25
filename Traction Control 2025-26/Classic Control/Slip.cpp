@@ -37,12 +37,12 @@ int main() {
         }
 
         // 5. Logica di controllo potenza
-        if (vSpeed == 0 && currentSlip > MAX_SLIP_STATIONARY) {
-            std::cout << -1 << std::endl; // Segnale stacco potenza
-        } else {
-            // Se lo slip è negativo (frenata), stampiamo 0
-            std::cout << (currentSlip < 0 ? 0 : currentSlip) << std::endl;
-        }
+        //if (vSpeed == 0 && currentSlip > MAX_SLIP_STATIONARY) {
+        //    std::cout << -1 << std::endl; // Segnale stacco potenza
+        //} else {
+        //    // Se lo slip è negativo (frenata), stampiamo 0
+        //    std::cout << (currentSlip < 0 ? 0 : currentSlip) << std::endl;
+        //}
     } // Fine while
 
     return 0;
