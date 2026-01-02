@@ -59,20 +59,24 @@ public:
 
     // 2. PREPARAZIONE AMBIENTE (Compilazione e Valgrind)
     bool preparaEsecuzione() {
-        if (ext == ".cpp") {
-            // --- TROVA LA CARTELLA DEL FILE ---
-            size_t last_slash = target.find_last_of("/");
-            string include_path = (last_slash == string::npos) ? "." : target.substr(0, last_slash);
+    if (ext == ".cpp") {
+        size_t last_slash = target.find_last_of("/");
+        string folder = (last_slash == string::npos) ? "." : target.substr(0, last_slash);
 
-            // --- MODIFICA QUI: Compila tutti i .cpp della cartella ---
-            string compile_cmd = "g++ -O3 \"" + include_path + "/*.cpp\" -o ./bin_test >/dev/null 2>&1";
-            
-            if (system(compile_cmd.c_str()) != 0) {
-                risultati.push_back({"BUILD", "Compilazione", "❌ FAIL", "g++ error"});
-                return false;
-            }
-            run_cmd = "valgrind --leak-check=full --error-exitcode=1 ./bin_test";
-        } 
+        // COMPILAZIONE MIRATA: 
+        // Compiliamo il file target + VehicleSpeed.cpp (necessario per il link)
+        // Usiamo il path relativo per trovare VehicleSpeed.cpp nella stessa cartella o root
+        string compile_cmd = "g++ -O3 \"" + target + "\" \"" + folder + "/VehicleSpeed.cpp\" -o ./bin_test >/dev/null 2>&1";
+        
+        if (system(compile_cmd.c_str()) != 0) {
+            risultati.push_back({"BUILD", "Compilazione", "❌ FAIL", "Errore g++: verifica inclusioni"});
+            return false;
+        }
+        run_cmd = "valgrind --leak-check=full --error-exitcode=1 ./bin_test";
+        return true;
+    }
+    return false;
+    }
 
     // 3. I 10 INPUT CASUALI
     void esegui10Test() {
