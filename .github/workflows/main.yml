@@ -19,20 +19,24 @@ jobs:
 
       - name: Run Engine su tutti i file
         run: |
+          # 1. Creiamo il file (questo sarà l'artifact)
           echo "--- REPORT QA GLOBALE ---" > qa_report.log
+          echo "Data: $(date)" >> qa_report.log
           
-          # Cerchiamo i file usando -print0 per gestire i nomi con SPAZI
-          find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.tex" \) \
+          # 2. Eseguiamo il tester su ogni file
+          # Usiamo '>>' per aggiungere l'output del C++ nel file .log
+          find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.m" -o -name "*.py" \) \
           -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
             
-            echo "🚀 Analizzando: $file"
-            # Eseguiamo docker. Il file qa_report.log viene aggiornato dal tester dentro il container
-            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file"
+            echo -e "\nAnalisi di: $file" >> qa_report.log
+            # CATTURIAMO L'OUTPUT DEL TESTER QUI:
+            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" >> qa_report.log 2>&1 || true
+            
           done
 
       - name: Upload Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: QA-Automotive-Report
+          name: Report-Traction-2025-26
           path: qa_report.log

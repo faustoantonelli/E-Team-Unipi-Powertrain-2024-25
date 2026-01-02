@@ -52,7 +52,7 @@ public:
             int res = system(("cppcheck --enable=all --error-exitcode=1 " + target + " >/dev/null 2>&1").c_str());
             risultati.push_back({"STATIC", "Analisi Cppcheck", (res == 0 ? "✅ OK" : "⚠️ WARN"), "Controllo statico"});
         } else if (ext == ".tex") {
-            int res = system(("chktex -q -n16 " + target + " >/dev/null 2>&1").c_str());
+            int res = system(("chktex -q -n16 " + target).c_str());
             risultati.push_back({"STATIC", "Analisi LaTeX", (res == 0 ? "✅ OK" : "❌ FAIL"), "Check chktex"});
         }
     }
