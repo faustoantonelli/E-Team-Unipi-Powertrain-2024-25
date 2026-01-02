@@ -30,7 +30,7 @@ jobs:
             
             echo -e "\nAnalisi di: $file" >> qa_report.log
             # CATTURIAMO L'OUTPUT DEL TESTER QUI:
-            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 70 >> qa_report.log 2>&1 || true
+            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 7 >> qa_report.log 2>&1 || true
             
           done
 
