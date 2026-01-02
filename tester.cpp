@@ -14,7 +14,7 @@ using namespace std;
 struct TestResult {
     string id;
     string input;
-    string output; // <--- AGGIUNTO
+    string output; 
     string stato;
     string dettagli;
 };
@@ -69,7 +69,7 @@ public:
                 return false;
             }
             // Manteniamo valgrind ma redirigiamo solo l'output del programma
-            run_cmd = "valgrind --leak-check=full --error-exitcode=1 ./bin_test";
+            run_cmd = "valgrind --leak-check=full --error-exitcode=1 --log-file=/tmp/valgrind.log ./bin_test";
             return true;
         }
         return false;
