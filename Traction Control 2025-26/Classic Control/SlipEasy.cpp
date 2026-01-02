@@ -18,6 +18,7 @@ int main() {
             std::cout << 0 << std::endl;
             continue;
         }
+        
         float avgRearSpeed = (RLSpeed + RRSpeed) / 2.0f;
         float RefSpeed = (vSpeed < MIN_VEHICLE_SPEED) ? MIN_VEHICLE_SPEED : vSpeed;
         float PercSlip = ((avgRearSpeed - vSpeed) * 100.0f) / RefSpeed;
