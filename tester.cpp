@@ -28,16 +28,14 @@ private:
     }
 
     string generate_random_input(int vars) {
-    stringstream ss;
-    // Genera i primi 7 valori (sensori)
-    for (int i = 0; i < vars - 1; ++i) {
-        double r = (rand() % 15001) / 100.0;
-        ss << fixed << setprecision(2) << r << " ";
+        stringstream ss;
+        for (int i = 0; i < vars - 1; ++i) {
+            double r = (rand() % 15001) / 100.0;
+            ss << fixed << setprecision(2) << r << " ";
+        }
+        ss << (rand() % 2); 
+        return ss.str();
     }
-    // L'ultimo valore (il Brake) deve essere 0 o 1
-    ss << (rand() % 2); 
-    return ss.str();
-}
 
 public:
     Tester(string t, int v) : target(t), num_vars(v) { srand(time(0)); }
@@ -62,37 +60,28 @@ public:
             char buffer[128];
             string out_data = "";
 
-            // --- INIZIO MISURAZIONE ---
             auto start = chrono::high_resolution_clock::now(); 
 
             FILE* pipe = popen(cmd.c_str(), "r");
             if (pipe) {
                 if (fgets(buffer, sizeof(buffer), pipe) != NULL) out_data = buffer;
                 int status = pclose(pipe);
-
-                // --- FINE MISURAZIONE ---
                 auto end = chrono::high_resolution_clock::now();
                 
-                // Calcoliamo la durata in secondi (usando double per i decimali)
                 chrono::duration<double> elapsed_seconds = end - start;
-                
-                // Formattiamo il tempo con 6 cifre decimali
                 stringstream ss_time;
                 ss_time << fixed << setprecision(6) << elapsed_seconds.count() << " s";
 
                 if (!out_data.empty() && out_data.back() == '\n') out_data.pop_back();
                 
                 risultati.push_back({
-                    "T" + to_string(i), 
-                    in_data, 
-                    (out_data.empty() ? "0" : out_data), 
-                    (status == 0 ? "✅ PASS" : "❌ FAIL"), 
-                    ss_time.str(), // Ora salvato come "0.002430 s"
-                    "Test dinamico"
+                    "T" + to_string(i), in_data, (out_data.empty() ? "0" : out_data), 
+                    (status == 0 ? "✅ PASS" : "❌ FAIL"), ss_time.str(), "Test dinamico"
                 });
             }
         }
-        system("rm -f ./bin_test");
+        // Cast a (void) per evitare il warning sull'output di system non usato
+        (void)system("rm -f ./bin_test");
     }
 
     void stampaReport() {
@@ -107,11 +96,10 @@ public:
             cout << left << setw(8) << r.id << " | " << setw(35) << r.input << " | " << setw(15) << r.output 
                  << " | " << setw(10) << r.stato << " | " << setw(15) << r.tempo << " | " << r.dettagli << endl;
         }
-        cout << "========================================================================================================\n";
     }
-};
 
-void generaReportHTML(string output_filename) {
+    // CORREZIONE: Funzione spostata DENTRO la classe 
+    void generaReportHTML(string output_filename) {
         ofstream file(output_filename);
         file << "<html><head><style>"
              << "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background: #f0f2f5; color: #333; }"
@@ -140,7 +128,7 @@ void generaReportHTML(string output_filename) {
         file << "</table></body></html>";
         file.close();
     }
-};
+}; // Fine corretta della classe 
 
 int main(int argc, char* argv[]) {
     if (argc < 2) return 1;
@@ -151,7 +139,7 @@ int main(int argc, char* argv[]) {
     engine.eseguiTestDinamici();
     engine.stampaReport();
     
-    // AGGIUNTO: Scrive il file HTML usando il percorso originale + .html
+    // Ora engine.generaReportHTML funziona correttamente 
     engine.generaReportHTML(string(argv[1]) + ".html"); 
     return 0;
 }
