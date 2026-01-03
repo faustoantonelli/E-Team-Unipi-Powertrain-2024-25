@@ -28,6 +28,7 @@ int main() {
         float refForDivision = (vSpeed < MIN_VEHICLE_SPEED) ? MIN_VEHICLE_SPEED : vSpeed;
         float currentSlip = ((avgRearSpeed - vSpeed) * 100.0f) / refForDivision;
 
+        
         // --- MIGLIORAMENTO: COMPENSAZIONE LATERALE (Esempio semplificato) ---
         float adaptiveThreshold = MAX_SLIP_STATIONARY + (std::abs(Ay) * 0.5f);
 
