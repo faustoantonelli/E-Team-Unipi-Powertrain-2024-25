@@ -7,6 +7,7 @@
 #include <ctime>
 #include <sstream>
 #include <sys/stat.h>
+#include <fstream>
 
 using namespace std;
 
@@ -110,18 +111,47 @@ public:
     }
 };
 
+void generaReportHTML(string output_filename) {
+        ofstream file(output_filename);
+        file << "<html><head><style>"
+             << "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 40px; background: #f0f2f5; color: #333; }"
+             << "table { border-collapse: collapse; width: 100%; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }"
+             << "th, td { border: 1px solid #e0e0e0; padding: 15px; text-align: left; }"
+             << "th { background-color: #1a73e8; color: white; text-transform: uppercase; font-size: 0.9em; }"
+             << "tr:nth-child(even) { background-color: #f8f9fa; }"
+             << ".PASS { color: #28a745; font-weight: bold; }"
+             << ".FAIL { color: #d93025; font-weight: bold; }"
+             << ".WARN { color: #f9ab00; font-weight: bold; }"
+             << "code { background: #f1f3f4; padding: 2px 5px; border-radius: 4px; font-family: monospace; }"
+             << "</style></head><body>";
+        
+        file << "<h1>🚀 Report Analisi: " << target << "</h1>";
+        file << "<p>Generato il: " << __DATE__ << " alle " << __TIME__ << "</p>";
+        file << "<table><tr><th>ID</th><th>Operazione/Input</th><th>Output</th><th>Stato</th><th>Tempo</th><th>Dettagli</th></tr>";
+
+        for (auto& r : risultati) {
+            string s_cls = (r.stato.find("PASS") != string::npos) ? "PASS" : 
+                           (r.stato.find("WARN") != string::npos) ? "WARN" : "FAIL";
+            
+            file << "<tr><td>" << r.id << "</td><td><code>" << r.input << "</code></td><td>" << r.output 
+                 << "</td><td class='" << s_cls << "'>" << r.stato 
+                 << "</td><td>" << r.tempo << "</td><td>" << r.dettagli << "</td></tr>";
+        }
+        file << "</table></body></html>";
+        file.close();
+    }
+};
+
 int main(int argc, char* argv[]) {
     if (argc < 2) return 1;
-
-    // Legge il numero di variabili dall'argomento (argv[2])
-    // Se non c'è, usa 8 come default
     int vars = (argc > 2) ? stoi(argv[2]) : 8; 
 
-    // CORREZIONE: Passa solo 'vars' al costruttore
     Tester engine(argv[1], vars); 
-    
     engine.eseguiAnalisiStatica();
     engine.eseguiTestDinamici();
     engine.stampaReport();
+    
+    // AGGIUNTO: Scrive il file HTML usando il percorso originale + .html
+    engine.generaReportHTML(string(argv[1]) + ".html"); 
     return 0;
 }

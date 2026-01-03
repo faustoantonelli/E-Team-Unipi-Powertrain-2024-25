@@ -2,7 +2,14 @@ name: Universal QA System
 
 on:
   push:
+    branches: ["main"]
   workflow_dispatch: 
+
+# AGGIUNTO: Permessi per scrivere su GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
 
 jobs:
   qa-test:
@@ -13,30 +20,37 @@ jobs:
 
       - name: Build Engine
         run: |
-          # Cerca il Dockerfile ovunque per sicurezza
           DOCKER_PATH=$(find . -name Dockerfile -print -quit)
           docker build -t qa-engine -f "$DOCKER_PATH" .
 
-      - name: Run Engine su tutti i file
+      - name: Run Engine e Genera Dashboard
         run: |
-          # 1. Creiamo il file (questo sarà l'artifact)
-          echo "--- REPORT QA GLOBALE ---" > qa_report.log
-          echo "Data: $(date)" >> qa_report.log
-          
-          # 2. Eseguiamo il tester su ogni file
-          # Usiamo '>>' per aggiungere l'output del C++ nel file .log
+          mkdir -p public
+          # Inizializziamo la Home Page del sito
+          echo "<html><body style='font-family:sans-serif; padding:50px; line-height:1.6;'>" > public/index.html
+          echo "<h1 style='color:#1a73e8;'>🏎️ Traction Control Dashboard 2025-26</h1>" >> public/index.html
+          echo "<h3>Seleziona un file per vedere i dettagli dell'analisi:</h3><ul>" >> public/index.html
+
           find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.m" -o -name "*.py" \) \
           -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
             
-            echo -e "\nAnalisi di: $file" >> qa_report.log
-            # CATTURIAMO L'OUTPUT DEL TESTER QUI:
-            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 8 >> qa_report.log 2>&1 || true
+            # Eseguiamo il tester (genera sia log che html)
+            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 8
+            
+            # Spostiamo l'HTML nella cartella del sito e aggiungiamo il link
+            REL_PATH=$(basename "$file")
+            mv "$file.html" public/
+            echo "<li><a href='$REL_PATH.html'>Analisi di $REL_PATH</a></li>" >> public/index.html
             
           done
+          echo "</ul></body></html>" >> public/index.html
 
-      - name: Upload Report
-        if: always()
-        uses: actions/upload-artifact@v4
+      # AGGIUNTO: Upload e Deploy automatico
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: Report-Traction-2025-26
-          path: qa_report.log
+          path: 'public'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
