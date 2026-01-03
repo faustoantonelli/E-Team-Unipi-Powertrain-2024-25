@@ -27,13 +27,16 @@ private:
     }
 
     string generate_random_input(int vars) {
-        stringstream ss;
-        for (int i = 0; i < vars; ++i) {
-            double r = (rand() % 15001) / 100.0;
-            ss << fixed << setprecision(2) << r << (i == vars - 1 ? "" : " ");
-        }
-        return ss.str();
+    stringstream ss;
+    // Genera i primi 7 valori (sensori)
+    for (int i = 0; i < vars - 1; ++i) {
+        double r = (rand() % 15001) / 100.0;
+        ss << fixed << setprecision(2) << r << " ";
     }
+    // L'ultimo valore (il Brake) deve essere 0 o 1
+    ss << (rand() % 2); 
+    return ss.str();
+}
 
 public:
     Tester(string t, int v) : target(t), num_vars(v) { srand(time(0)); }
@@ -109,7 +112,12 @@ public:
 
 int main(int argc, char* argv[]) {
     if (argc < 2) return 1;
-    Tester engine(argv[1], 7);
+
+    // LEGGE IL NUMERO DI VARIABILI DALL'ARGOMENTO (argv[2])
+    // Se non c'è, usa 8 come default
+    int vars = (argc > 2) ? stoi(argv[2]) : 8; 
+
+    Tester engine(argv[1], vars 7);
     engine.eseguiAnalisiStatica();
     engine.eseguiTestDinamici();
     engine.stampaReport();
