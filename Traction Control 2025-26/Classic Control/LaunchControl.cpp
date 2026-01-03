@@ -62,7 +62,7 @@ int main() {
                     if (optimalTorque < 0) optimalTorque = 0;
                 }
             }
-            // In questa fase l'output è la rampa che stiamo testando
+            // In questa fase l'outpuT è la rampa che stiamo testando
             std::cout << currentTorque << std::endl;
         } 
         else {
