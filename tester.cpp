@@ -113,11 +113,13 @@ public:
 int main(int argc, char* argv[]) {
     if (argc < 2) return 1;
 
-    // LEGGE IL NUMERO DI VARIABILI DALL'ARGOMENTO (argv[2])
+    // Legge il numero di variabili dall'argomento (argv[2])
     // Se non c'è, usa 8 come default
     int vars = (argc > 2) ? stoi(argv[2]) : 8; 
 
-    Tester engine(argv[1], vars 7);
+    // CORREZIONE: Passa solo 'vars' al costruttore
+    Tester engine(argv[1], vars); 
+    
     engine.eseguiAnalisiStatica();
     engine.eseguiTestDinamici();
     engine.stampaReport();
