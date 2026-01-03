@@ -19,17 +19,10 @@ int main() {
     while (std::cin >> FLSpeed >> FRSpeed >> RLSpeed >> RRSpeed >> Ax >> Ay >> Az) {
         float vSpeed = VehicleSpeed(FLSpeed, FRSpeed, Ax, Ay, Az);
 
-        // --- MIGLIORAMENTO: FAIL-SAFE ---
-        if (std::abs(RLSpeed - RRSpeed) > MAX_WHEEL_DIFF) {
-            std::cout << "SENSOR_ERROR" << std::endl;
-            continue;
-        }
-
         if (RLSpeed < 0 || RRSpeed < 0 || vSpeed < 0) {
             std::cout << 0.0f << std::endl;
             continue;
         }
-        
 
         float avgRearSpeed = (RLSpeed + RRSpeed) / 2.0f;
         float refForDivision = (vSpeed < MIN_VEHICLE_SPEED) ? MIN_VEHICLE_SPEED : vSpeed;
@@ -43,6 +36,12 @@ int main() {
         } else {
             std::cout << currentSlip << std::endl;
         }
+         if (std::abs(RLSpeed - RRSpeed) > MAX_WHEEL_DIFF) {
+            // Aggiungi l'operatore << tra la variabile e la stringa
+            std::cout << currentSlip << " + SENSOR_ERROR" << std::endl;
+        continue;
+}
+
     }
     return 0;
 }
