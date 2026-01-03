@@ -24,21 +24,18 @@ jobs:
 
       - name: Prepara Cartelle e Run
         run: |
-          # 1. Creiamo un ID unico per questa sessione (Data e Ora)
           TIMESTAMP=$(date +'%Y-%m-%d_%H-%M')
           mkdir -p "deploy/runs/$TIMESTAMP"
           
-          # 2. Creiamo l'indice della singola run
+          # Indice della singola sessione
           echo "<html><body style='font-family:sans-serif; padding:30px; background:#f4f7f6;'>" > "deploy/runs/$TIMESTAMP/index.html"
           echo "<h1 style='color:#1a73e8;'>🚀 Sessione di Test: $TIMESTAMP</h1>" >> "deploy/runs/$TIMESTAMP/index.html"
           echo "<h3>Report per file:</h3><ul>" >> "deploy/runs/$TIMESTAMP/index.html"
 
-          # 3. Eseguiamo i test
+          # Esecuzione Test
           find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.m" -o -name "*.py" \) \
           -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
-            
             docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 8
-            
             if [ -f "$file.html" ]; then
               FILE_NAME=$(basename "$file")
               mv "$file.html" "deploy/runs/$TIMESTAMP/"
@@ -49,20 +46,24 @@ jobs:
 
       - name: Rigenera Home Page Globale
         run: |
-          # Questo script crea la pagina principale che elenca tutti i test passati
-          # Scarichiamo i file esistenti dal branch gh-pages per vedere cosa c'era prima
-          git checkout gh-pages || git checkout --orphan gh-pages
+          mkdir -p old_pages
+          # Scarichiamo il passato (gh-pages) per non perdere la cronologia
+          git clone --branch gh-pages --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git old_pages || true
           
-          # Creiamo la nuova Home Page (index.html principale)
-          echo "<html><body style='font-family:sans-serif; padding:50px; line-height:1.8; background:#e9ecef;'>" > deploy/index.html
-          echo "<div style='background:white; padding:40px; border-radius:15px; shadow: 0 10px 30px rgba(0,0,0,0.1);'>" >> deploy/index.html
+          if [ -d "old_pages/runs" ]; then
+            cp -r old_pages/runs/* deploy/runs/
+          fi
+
+          # Creazione Index Globale
+          echo "<html><body style='font-family:sans-serif; padding:50px; background:#e9ecef;'>" > deploy/index.html
+          echo "<div style='background:white; padding:40px; border-radius:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width:800px; margin:auto;'>" >> deploy/index.html
           echo "<h1 style='color:#1a73e8; border-bottom:2px solid #1a73e8;'>🏎️ E-Team Powertrain - Archivio QA</h1>" >> deploy/index.html
-          echo "<h2>Cronologia Sessioni di Test:</h2><ul>" >> deploy/index.html
+          echo "<h2>Cronologia Sessioni di Test:</h2><ul style='list-style:none; padding:0;'>" >> deploy/index.html
           
-          # Elenchiamo tutte le cartelle dentro 'runs' dalla più recente
-          ls -d runs/* 2>/dev/null | sort -r | while read dir; do
+          # Generazione lista link
+          ls -d deploy/runs/* 2>/dev/null | sort -r | while read dir; do
             TIME_LABEL=$(basename "$dir")
-            echo "<li><a href='$dir/index.html' style='font-weight:bold; font-size:1.1em;'>Sessione del $TIME_LABEL</a></li>" >> deploy/index.html
+            echo "<li style='margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;'><a href='runs/$TIME_LABEL/index.html' style='color:#333; text-decoration:none; font-weight:bold; font-size:1.1em;'>📁 Sessione del $TIME_LABEL</a></li>" >> deploy/index.html
           done
           
           echo "</ul></div></body></html>" >> deploy/index.html
@@ -72,4 +73,4 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./deploy
-          keep_files: true # FONDAMENTALE per non cancellare i test vecchi
+          keep_files: true
