@@ -1,13 +1,12 @@
-name: Universal QA System
+name: Universal QA System with History
 
 on:
   push:
     branches: ["main"]
   workflow_dispatch: 
 
-# AGGIUNTO: PermOssi per scrivere su GitHub Pages
 permissions:
-  contents: read
+  contents: write # Serve 'write' per mantenere i file vecchi
   pages: write
   id-token: write
 
@@ -23,34 +22,35 @@ jobs:
           DOCKER_PATH=$(find . -name Dockerfile -print -quit)
           docker build -t qa-engine -f "$DOCKER_PATH" .
 
-      - name: Run Engine e Genera Dashboard
+      - name: Run Engine e Organizza Storico
         run: |
-          mkdir -p public
-          # Inizializziamo la Home Page del sito
-          echo "<html><body style='font-family:sans-serif; padding:50px; line-height:1.6;'>" > public/index.html
-          echo "<h1 style='color:#1a73e8;'>🏎️ Traction Control Dashboard 2025-26</h1>" >> public/index.html
-          echo "<h3>Seleziona un file per vedere i dettagli dell'analisi:</h3><ul>" >> public/index.html
+          # 1. Creiamo un nome cartella basato su data e ora (es. 2025-05-20_14-30)
+          RUN_ID=$(date +'%Y-%m-%d_%H-%M')
+          mkdir -p "public/$RUN_ID"
+          
+          # 2. Prepariamo la index della specifica run
+          echo "<html><body style='font-family:sans-serif; padding:30px;'>" > "public/$RUN_ID/index.html"
+          echo "<h1>🚀 Test Run: $RUN_ID</h1><ul>" >> "public/$RUN_ID/index.html"
 
+          # 3. Analisi dei file
           find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.m" -o -name "*.py" \) \
           -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
             
-            # Eseguiamo il tester (genera sia log che html)
             docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 8
             
-            # Spostiamo l'HTML nella cartella del sito e aggiungiamo il link
-            REL_PATH=$(basename "$file")
-            mv "$file.html" public/
-            echo "<li><a href='$REL_PATH.html'>Analisi di $REL_PATH</a></li>" >> public/index.html
-            
+            if [ -f "$file.html" ]; then
+              mv "$file.html" "public/$RUN_ID/"
+              echo "<li><a href='$(basename "$file.html")'>$(basename "$file")</a></li>" >> "public/$RUN_ID/index.html"
+            fi
           done
-          echo "</ul></body></html>" >> public/index.html
+          echo "</ul><br><a href='../'>⬅️ Torna alla Home</a></body></html>" >> "public/$RUN_ID/index.html"
 
-      # AGGIUNTO: Upload e Deploy automatico
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: 'public'
-
+      # 4. Deploy speciale che non cancella il passato
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
+          keep_files: true # FONDAMENTALE: non cancella i test vecchi!
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
