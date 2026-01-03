@@ -27,46 +27,53 @@ jobs:
           TIMESTAMP=$(date +'%Y-%m-%d_%H-%M')
           mkdir -p "deploy/runs/$TIMESTAMP"
           
-          # Indice della singola sessione
+          # Creazione Indice di Sessione
           echo "<html><body style='font-family:sans-serif; padding:30px; background:#f4f7f6;'>" > "deploy/runs/$TIMESTAMP/index.html"
           echo "<h1 style='color:#1a73e8;'>🚀 Sessione di Test: $TIMESTAMP</h1>" >> "deploy/runs/$TIMESTAMP/index.html"
-          echo "<h3>Report per file:</h3><ul>" >> "deploy/runs/$TIMESTAMP/index.html"
+          echo "<h3>Report per file analizzati:</h3><ul>" >> "deploy/runs/$TIMESTAMP/index.html"
 
-          # Esecuzione Test
+          # Esecuzione Test (Controlla bene il nome della cartella!)
+          # Usiamo sudo chmod per assicurarci che i file creati da Docker siano manipolabili
           find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.m" -o -name "*.py" \) \
           -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
+            
             docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 8
+            
+            # Sblocchiamo i permessi del file appena creato da Docker
+            sudo chmod 777 "$file.html" || true
+            
             if [ -f "$file.html" ]; then
               FILE_NAME=$(basename "$file")
               mv "$file.html" "deploy/runs/$TIMESTAMP/"
               echo "<li><a href='$FILE_NAME.html'>$FILE_NAME</a></li>" >> "deploy/runs/$TIMESTAMP/index.html"
             fi
           done
-          echo "</ul><br><a href='../../index.html'>⬅️ Torna alla Cronologia Globale</a></body></html>" >> "deploy/runs/$TIMESTAMP/index.html"
+          echo "</ul><br><a href='../../index.html' style='color:#1a73e8; font-weight:bold;'>⬅️ Torna alla Cronologia Globale</a></body></html>" >> "deploy/runs/$TIMESTAMP/index.html"
 
       - name: Rigenera Home Page Globale
         run: |
-          mkdir -p old_pages
-          # Scarichiamo il passato (gh-pages) per non perdere la cronologia
-          git clone --branch gh-pages --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git old_pages || true
+          mkdir -p deploy/runs
+          # Scarichiamo il passato (se esiste) in una cartella temporanea
+          git clone --branch gh-pages --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git gh-pages-temp || echo "Primo deploy: branch gh-pages non ancora presente."
           
-          if [ -d "old_pages/runs" ]; then
-            cp -r old_pages/runs/* deploy/runs/
+          # Uniamo i vecchi report alla nuova cartella deploy
+          if [ -d "gh-pages-temp/runs" ]; then
+            cp -r gh-pages-temp/runs/* deploy/runs/
           fi
 
-          # Creazione Index Globale
+          # Generazione Home Page (index.html principale)
           echo "<html><body style='font-family:sans-serif; padding:50px; background:#e9ecef;'>" > deploy/index.html
           echo "<div style='background:white; padding:40px; border-radius:15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width:800px; margin:auto;'>" >> deploy/index.html
-          echo "<h1 style='color:#1a73e8; border-bottom:2px solid #1a73e8;'>🏎️ E-Team Powertrain - Archivio QA</h1>" >> deploy/index.html
-          echo "<h2>Cronologia Sessioni di Test:</h2><ul style='list-style:none; padding:0;'>" >> deploy/index.html
+          echo "<h1 style='color:#1a73e8; border-bottom:2px solid #1a73e8; padding-bottom:10px;'>🏎️ E-Team Powertrain - Archivio QA</h1>" >> deploy/index.html
+          echo "<h2>Cronologia Sessioni di Test:</h2><p>Seleziona una data per vedere i report dettagliati:</p><ul style='list-style:none; padding:0;'>" >> deploy/index.html
           
-          # Generazione lista link
+          # Creazione della lista cliccabile basata sulle cartelle trovate
           ls -d deploy/runs/* 2>/dev/null | sort -r | while read dir; do
             TIME_LABEL=$(basename "$dir")
-            echo "<li style='margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;'><a href='runs/$TIME_LABEL/index.html' style='color:#333; text-decoration:none; font-weight:bold; font-size:1.1em;'>📁 Sessione del $TIME_LABEL</a></li>" >> deploy/index.html
+            echo "<li style='margin-bottom:12px; border-bottom:1px solid #eee; padding-bottom:8px;'><a href='runs/$TIME_LABEL/index.html' style='color:#333; text-decoration:none; font-weight:bold; font-size:1.1em;'>📂 Sessione del $TIME_LABEL</a></li>" >> deploy/index.html
           done
           
-          echo "</ul></div></body></html>" >> deploy/index.html
+          echo "</ul></div><p style='text-align:center; color:#888; margin-top:20px;'>Generato automaticamente da GitHub Actions</p></body></html>" >> deploy/index.html
 
       - name: Deploy su GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
