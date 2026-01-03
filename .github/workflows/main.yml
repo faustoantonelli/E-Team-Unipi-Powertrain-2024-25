@@ -1,4 +1,4 @@
-name: Universal QA System with History
+name: QA System with History Navigation
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   workflow_dispatch: 
 
 permissions:
-  contents: write # Serve 'write' per mantenere i file vecchi
+  contents: write
   pages: write
   id-token: write
 
@@ -22,35 +22,54 @@ jobs:
           DOCKER_PATH=$(find . -name Dockerfile -print -quit)
           docker build -t qa-engine -f "$DOCKER_PATH" .
 
-      - name: Run Engine e Organizza Storico
+      - name: Prepara Cartelle e Run
         run: |
-          # 1. Creiamo un nome cartella basato su data e ora (es. 2025-05-20_14-30)
-          RUN_ID=$(date +'%Y-%m-%d_%H-%M')
-          mkdir -p "public/$RUN_ID"
+          # 1. Creiamo un ID unico per questa sessione (Data e Ora)
+          TIMESTAMP=$(date +'%Y-%m-%d_%H-%M')
+          mkdir -p "deploy/runs/$TIMESTAMP"
           
-          # 2. Prepariamo la index della specifica run
-          echo "<html><body style='font-family:sans-serif; padding:30px;'>" > "public/$RUN_ID/index.html"
-          echo "<h1>🚀 Test Run: $RUN_ID</h1><ul>" >> "public/$RUN_ID/index.html"
+          # 2. Creiamo l'indice della singola run
+          echo "<html><body style='font-family:sans-serif; padding:30px; background:#f4f7f6;'>" > "deploy/runs/$TIMESTAMP/index.html"
+          echo "<h1 style='color:#1a73e8;'>🚀 Sessione di Test: $TIMESTAMP</h1>" >> "deploy/runs/$TIMESTAMP/index.html"
+          echo "<h3>Report per file:</h3><ul>" >> "deploy/runs/$TIMESTAMP/index.html"
 
-          # 3. Analisi dei file
+          # 3. Eseguiamo i test
           find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.m" -o -name "*.py" \) \
           -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
             
             docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 8
             
             if [ -f "$file.html" ]; then
-              mv "$file.html" "public/$RUN_ID/"
-              echo "<li><a href='$(basename "$file.html")'>$(basename "$file")</a></li>" >> "public/$RUN_ID/index.html"
+              FILE_NAME=$(basename "$file")
+              mv "$file.html" "deploy/runs/$TIMESTAMP/"
+              echo "<li><a href='$FILE_NAME.html'>$FILE_NAME</a></li>" >> "deploy/runs/$TIMESTAMP/index.html"
             fi
           done
-          echo "</ul><br><a href='../'>⬅️ Torna alla Home</a></body></html>" >> "public/$RUN_ID/index.html"
+          echo "</ul><br><a href='../../index.html'>⬅️ Torna alla Cronologia Globale</a></body></html>" >> "deploy/runs/$TIMESTAMP/index.html"
 
-      # 4. Deploy speciale che non cancella il passato
-      - name: Deploy to GitHub Pages
+      - name: Rigenera Home Page Globale
+        run: |
+          # Questo script crea la pagina principale che elenca tutti i test passati
+          # Scarichiamo i file esistenti dal branch gh-pages per vedere cosa c'era prima
+          git checkout gh-pages || git checkout --orphan gh-pages
+          
+          # Creiamo la nuova Home Page (index.html principale)
+          echo "<html><body style='font-family:sans-serif; padding:50px; line-height:1.8; background:#e9ecef;'>" > deploy/index.html
+          echo "<div style='background:white; padding:40px; border-radius:15px; shadow: 0 10px 30px rgba(0,0,0,0.1);'>" >> deploy/index.html
+          echo "<h1 style='color:#1a73e8; border-bottom:2px solid #1a73e8;'>🏎️ E-Team Powertrain - Archivio QA</h1>" >> deploy/index.html
+          echo "<h2>Cronologia Sessioni di Test:</h2><ul>" >> deploy/index.html
+          
+          # Elenchiamo tutte le cartelle dentro 'runs' dalla più recente
+          ls -d runs/* 2>/dev/null | sort -r | while read dir; do
+            TIME_LABEL=$(basename "$dir")
+            echo "<li><a href='$dir/index.html' style='font-weight:bold; font-size:1.1em;'>Sessione del $TIME_LABEL</a></li>" >> deploy/index.html
+          done
+          
+          echo "</ul></div></body></html>" >> deploy/index.html
+
+      - name: Deploy su GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./public
-          keep_files: true # FONDAMENTALE: non cancella i test vecchi!
-          user_name: 'github-actions[bot]'
-          user_email: 'github-actions[bot]@users.noreply.github.com'
+          publish_dir: ./deploy
+          keep_files: true # FONDAMENTALE per non cancellare i test vecchi
