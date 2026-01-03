@@ -11,7 +11,6 @@
 
 using namespace std;
 
-// Struttura per memorizzare i dati di ogni test
 struct TestResult {
     string id; 
     string input; 
@@ -27,14 +26,12 @@ private:
     string target;
     int num_vars;
 
-    // Funzione interna per controllare se il file esiste/è vuoto
     bool is_file_empty(const string& filename) {
         struct stat st;
         if (stat(filename.c_str(), &st) != 0) return true;
         return st.st_size == 0;
     }
 
-    // Generatore di input casuali (sensori + freno)
     string generate_random_input(int vars) {
         stringstream ss;
         for (int i = 0; i < vars - 1; ++i) {
@@ -48,28 +45,26 @@ private:
 public:
     Tester(string t, int v) : target(t), num_vars(v) { srand(time(0)); }
 
-    // 1. ANALISI STATICA (Cppcheck)
     void eseguiAnalisiStatica() {
         if (is_file_empty(target)) return;
+        // Analisi con Cppcheck
         string cmd = "cppcheck --enable=all --error-exitcode=1 \"" + target + "\" >/dev/null 2>&1";
         
-        // Sezione Dettagli personalizzata
-        string desc_ok = "Analisi Statica Superata: Il codice rispetta gli standard di sicurezza. Nessun memory leak o variabile non inizializzata rilevata da Cppcheck.";
-        string desc_warn = "Attenzione: Rilevate potenziali criticità stilistiche o logiche nel codice sorgente. Si consiglia una revisione manuale.";
+        string desc_ok = "<b>Sicurezza Codice:</b> Nessun memory leak o errore critico rilevato.";
+        string desc_warn = "<b>Suggerimento:</b> Rilevate potenziali inefficienze. Controllare inizializzazioni o stili.";
 
         if (system(cmd.c_str()) == 0) 
-            risultati.push_back({"STATIC", "Cppcheck", "-", "✅ PASS", "-", desc_ok});
+            risultati.push_back({"🛡️ STAT", "Analisi Statica", "-", "✅ PASS", "N/A", desc_ok});
         else 
-            risultati.push_back({"STATIC", "Cppcheck", "-", "⚠️ WARN", "-", desc_warn});
+            risultati.push_back({"🛡️ STAT", "Analisi Statica", "-", "⚠️ WARN", "N/A", desc_warn});
     }
 
-    // 2. ANALISI DINAMICA (Esecuzione)
     void eseguiTestDinamici() {
         if (is_file_empty(target)) return;
         string compile_cmd = "g++ -O3 \"" + target + "\" -o ./bin_test >/dev/null 2>&1";
         
         if (system(compile_cmd.c_str()) != 0) {
-            risultati.push_back({"BUILD", "Compiler", "-", "❌ FAIL", "-", "Errore critico: Il file non compila correttamente."});
+            risultati.push_back({"🚫 BUILD", "Compilatore", "-", "❌ FAIL", "-", "Errore fatale: compilazione fallita."});
             return;
         }
 
@@ -89,66 +84,58 @@ public:
                 chrono::duration<double> elapsed_seconds = end - start;
                 
                 stringstream ss_time;
-                ss_time << fixed << setprecision(6) << elapsed_seconds.count() << " s";
+                ss_time << fixed << setprecision(6) << elapsed_seconds.count();
 
                 if (!out_data.empty() && out_data.back() == '\n') out_data.pop_back();
                 
-                // Sezione Dettagli personalizzata per i test dinamici
-                string desc_dyn = "Stress Test Dinamico: Verifica della stabilità del calcolo e dei tempi di risposta con input casuali simulati.";
-
                 risultati.push_back({
-                    "T" + to_string(i), in_data, (out_data.empty() ? "0" : out_data), 
-                    (status == 0 ? "✅ PASS" : "❌ FAIL"), ss_time.str(), desc_dyn
+                    "🚀 T" + to_string(i), in_data, (out_data.empty() ? "0" : out_data), 
+                    (status == 0 ? "✅ PASS" : "❌ FAIL"), ss_time.str() + "s", "Simulazione input sensori in tempo reale."
                 });
             }
         }
         (void)system("rm -f ./bin_test");
     }
 
-    // 3. REPORT TESTUALE (Terminale)
     void stampaReport() {
-        cout << "\n========================================================================================================\n";
-        cout << "                                ARTIFACT - REPORT FINALE DI COLLAUDO\n";
-        cout << " TARGET: " << target << "\n";
-        cout << "========================================================================================================\n";
-        cout << left << setw(8) << "ID" << " | " << setw(35) << "OPERAZIONE" << " | " << setw(15) << "OUTPUT" 
-             << " | " << setw(10) << "STATO" << " | " << setw(15) << "TEMPO (s)" << " | " << "DETTAGLI" << endl;
-        cout << "--------------------------------------------------------------------------------------------------------\n";
+        cout << "\n[E-TEAM QA ENGINE] Risultati per: " << target << endl;
         for (auto& r : risultati) {
-            cout << left << setw(8) << r.id << " | " << setw(35) << r.input << " | " << setw(15) << r.output 
-                 << " | " << setw(10) << r.stato << " | " << setw(15) << r.tempo << " | " << r.dettagli << endl;
+            cout << "[" << r.stato << "] " << r.id << " | Time: " << r.tempo << endl;
         }
     }
 
-    // 4. REPORT HTML (Sito Web)
     void generaReportHTML(string output_filename) {
         ofstream file(output_filename);
-        file << "<html><head><style>"
-             << "body { font-family: 'Segoe UI', sans-serif; margin: 40px; background: #f0f2f5; color: #333; }"
-             << "table { border-collapse: collapse; width: 100%; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }"
-             << "th, td { border: 1px solid #e0e0e0; padding: 15px; text-align: left; }"
-             << "th { background-color: #1a73e8; color: white; text-transform: uppercase; font-size: 0.9em; }"
-             << "tr:nth-child(even) { background-color: #f8f9fa; }"
-             << ".PASS { color: #28a745; font-weight: bold; }"
-             << ".FAIL { color: #d93025; font-weight: bold; }"
-             << ".WARN { color: #f9ab00; font-weight: bold; }"
-             << ".details-text { font-size: 0.85em; color: #666; font-style: italic; }"
-             << "code { background: #f1f3f4; padding: 2px 5px; border-radius: 4px; font-family: monospace; }"
-             << "</style></head><body>";
+        file << "<html><head><title>Report QA - " << target << "</title><style>"
+             << "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 40px; background: #f4f7f9; color: #333; }"
+             << "header { background: #1a73e8; color: white; padding: 20px 40px; margin: -40px -40px 40px -40px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }"
+             << "table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }"
+             << "th, td { padding: 15px 20px; text-align: left; border-bottom: 1px solid #eee; }"
+             << "th { background: #f8f9fa; color: #5f6368; text-transform: uppercase; font-size: 0.85em; letter-spacing: 1px; }"
+             << "tr:hover { background: #f1f8ff; }"
+             << ".PASS { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 4px 8px; border-radius: 4px; }"
+             << ".FAIL { color: #c62828; font-weight: bold; background: #ffeeb2; padding: 4px 8px; border-radius: 4px; }"
+             << ".WARN { color: #f57c00; font-weight: bold; background: #fff3e0; padding: 4px 8px; border-radius: 4px; }"
+             << "code { background: #202124; color: #f8f9fa; padding: 3px 6px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 0.9em; }"
+             << ".details { font-size: 0.9em; color: #666; }"
+             << ".back-link { display: inline-block; margin-top: 30px; color: #1a73e8; text-decoration: none; font-weight: bold; }"
+             << "</style></head><body>"
+             << "<header><h1>🏎️ Analisi Tecnica: " << target << "</h1>"
+             << "<p>E-Team Powertrain QA System | Data: " << __DATE__ << " " << __TIME__ << "</p></header>";
         
-        file << "<h1>🚀 Report Analisi Avanzata: " << target << "</h1>";
-        file << "<p>Data Test: " << __DATE__ << " | Ora: " << __TIME__ << "</p>";
-        file << "<table><tr><th>ID</th><th>Operazione/Input</th><th>Risultato</th><th>Stato</th><th>Tempo</th><th>📂 Dettagli</th></tr>";
+        file << "<table><thead><tr><th>ID</th><th>Test / Input</th><th>Risultato</th><th>Stato</th><th>Tempo</th><th>Dettagli Tecnici</th></tr></thead><tbody>";
 
         for (auto& r : risultati) {
             string s_cls = (r.stato.find("PASS") != string::npos) ? "PASS" : 
                            (r.stato.find("WARN") != string::npos) ? "WARN" : "FAIL";
             
-            file << "<tr><td>" << r.id << "</td><td><code>" << r.input << "</code></td><td>" << r.output 
-                 << "</td><td class='" << s_cls << "'>" << r.stato 
-                 << "</td><td>" << r.tempo << "</td><td class='details-text'>" << r.dettagli << "</td></tr>";
+            file << "<tr><td><b>" << r.id << "</b></td><td><code>" << r.input << "</code></td><td>" << r.output 
+                 << "</td><td><span class='" << s_cls << "'>" << r.stato << "</span></td>"
+                 << "<td>" << r.tempo << "</td><td class='details'>" << r.dettagli << "</td></tr>";
         }
-        file << "</table></body></html>";
+        file << "</tbody></table>"
+             << "<a href='index.html' class='back-link'>⬅️ Torna alla lista della sessione</a>"
+             << "</body></html>";
         file.close();
     }
 }; 
