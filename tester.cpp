@@ -104,48 +104,38 @@ public:
         }
     }
 
-    void generaReportHTML(string filename) {
-        ofstream file(filename);
-        file << "<!DOCTYPE html><html lang='it'><head><meta charset='UTF-8'>"
-             << "<style>"
-             << "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; margin: 0; padding: 40px; }"
-             << ".container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-top: 8px solid #1B4332; }"
-             << "header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }"
-             << "h1 { color: #1B4332; margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 1px; }"
-             << ".status-meta { text-align: right; font-size: 0.9em; color: #666; }"
-             << "table { width: 100%; border-collapse: collapse; margin-top: 20px; }"
-             << "th { background-color: #f8f9fa; color: #1B4332; text-align: left; padding: 15px; border-bottom: 2px solid #1B4332; text-transform: uppercase; font-size: 0.85em; }"
-             << "td { padding: 15px; border-bottom: 1px solid #eee; font-size: 0.95em; }"
-             << "tr:hover { background-color: #f1f8f5; }"
-             << "code { background: #2d2d2d; color: #f8f8f2; padding: 4px 8px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 0.9em; }"
-             << ".badge { padding: 5px 12px; border-radius: 20px; font-weight: bold; font-size: 0.8em; text-transform: uppercase; }"
-             << ".PASS { background-color: #d4edda; color: #155724; }"
-             << ".WARN { background-color: #fff3cd; color: #856404; }"
-             << ".FAIL { background-color: #f8d7da; color: #721c24; }"
-             << ".back-link { display: inline-block; margin-top: 30px; color: #1B4332; text-decoration: none; font-weight: bold; border-bottom: 2px solid transparent; transition: 0.3s; }"
-             << ".back-link:hover { border-bottom-color: #1B4332; }"
+    void generaReportHTML(string output_filename) {
+        ofstream file(output_filename);
+        file << "<html><head><title>Report QA - " << target << "</title><style>"
+             << "body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 40px; background: #f4f7f9; color: #333; }"
+             << "header { background: #1a73e8; color: white; padding: 20px 40px; margin: -40px -40px 40px -40px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }"
+             << "table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }"
+             << "th, td { padding: 15px 20px; text-align: left; border-bottom: 1px solid #eee; }"
+             << "th { background: #f8f9fa; color: #5f6368; text-transform: uppercase; font-size: 0.85em; letter-spacing: 1px; }"
+             << "tr:hover { background: #f1f8ff; }"
+             << ".PASS { color: #2e7d32; font-weight: bold; background: #e8f5e9; padding: 4px 8px; border-radius: 4px; }"
+             << ".FAIL { color: #c62828; font-weight: bold; background: #ffeeb2; padding: 4px 8px; border-radius: 4px; }"
+             << ".WARN { color: #f57c00; font-weight: bold; background: #fff3e0; padding: 4px 8px; border-radius: 4px; }"
+             << "code { background: #202124; color: #f8f9fa; padding: 3px 6px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 0.9em; }"
+             << ".details { font-size: 0.9em; color: #666; }"
+             << ".back-link { display: inline-block; margin-top: 30px; color: #1a73e8; text-decoration: none; font-weight: bold; }"
              << "</style></head><body>"
-             << "<div class='container'><header>"
-             << "<div><h1>🏎️ QA Report: " << target << "</h1><p>E-Team Squadra Corse UniPi</p></div>"
-             << "<div class='status-meta'>Generato il: " << __DATE__ << "<br>Sessione: <b>LIVE TEST</b></div>"
-             << "</header>";
+             << "<header><h1>🏎️ Analisi Tecnica: " << target << "</h1>"
+             << "<p>E-Team Powertrain QA System | Data: " << __DATE__ << " " << __TIME__ << "</p></header>";
+        
+        file << "<table><thead><tr><th>ID</th><th>Test / Input</th><th>Risultato</th><th>Stato</th><th>Tempo</th><th>Dettagli Tecnici</th></tr></thead><tbody>";
 
-        file << "<table><thead><tr><th>Test ID</th><th>Input Sensori</th><th>Output Sistema</th><th>Stato</th><th>Tempo</th></tr></thead><tbody>";
-
-        for (const auto& r : risultati) {
+        for (auto& r : risultati) {
             string s_cls = (r.stato.find("PASS") != string::npos) ? "PASS" : 
                            (r.stato.find("WARN") != string::npos) ? "WARN" : "FAIL";
             
-            file << "<tr><td><b>" << r.id << "</b></td>"
-            << "<td><code>" << r.input << "</code></td>"
-            << "<td>" << r.output << "</td>"
-            << "<td><span class='badge " << s_cls << "'>" << r.stato << "</span></td>"
-            << "<td>" << r.tempo << "</td></tr>";
+            file << "<tr><td><b>" << r.id << "</b></td><td><code>" << r.input << "</code></td><td>" << r.output 
+                 << "</td><td><span class='" << s_cls << "'>" << r.stato << "</span></td>"
+                 << "<td>" << r.tempo << "</td><td class='details'>" << r.dettagli << "</td></tr>";
         }
-
         file << "</tbody></table>"
-             << "<a href='index.html' class='back-link'>⬅ Torna alla Dashboard Generale</a>"
-             << "</div></body></html>";
+             << "<a href='index.html' class='back-link'>⬅️ Torna alla lista della sessione</a>"
+             << "</body></html>";
         file.close();
     }
 }; 
@@ -158,7 +148,7 @@ int main(int argc, char* argv[]) {
     engine.eseguiAnalisiStatica();
     engine.eseguiTestDinamici();
     engine.stampaReport();
-    engine.generaReportHTML("report.html"); 
+    engine.generaReportHTML(string(argv[1]) + ".html"); 
 
     return 0;
 }

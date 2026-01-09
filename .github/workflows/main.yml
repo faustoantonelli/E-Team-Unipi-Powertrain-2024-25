@@ -1,4 +1,4 @@
-name: QA System - E-Team Unified Dashboard
+name: QA System with History Navigation
 
 on:
   push:
@@ -19,53 +19,58 @@ jobs:
 
       - name: Build Engine
         run: |
-          # Cerca il Dockerfile ovunque nel progetto
           DOCKER_PATH=$(find . -name Dockerfile -print -quit)
-          if [ -z "$DOCKER_PATH" ]; then
-            echo "❌ ERRORE: Dockerfile non trovato nel repository!"
-            exit 1
-          fi
           docker build -t qa-engine -f "$DOCKER_PATH" .
 
-      - name: Esecuzione Test e Generazione Report
+      - name: Prepara Cartelle e Run
         run: |
           TIMESTAMP=$(date +'%Y-%m-%d_%H-%M')
           mkdir -p "deploy/runs/$TIMESTAMP"
           
-          STYLE="..." # Mantieni il tuo stile CSS
-          echo "<html><head>$STYLE</head><body>..." > "deploy/runs/$TIMESTAMP/index.html"
+          # Indice della singola sessione
+          echo "<html><head><style>body{font-family:sans-serif;background:#f4f7f6;padding:40px;} .card{background:white;padding:30px;border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,0.1);} a{color:#1a73e8;text-decoration:none;font-weight:bold;} li{margin:10px 0;}</style></head><body>" > "deploy/runs/$TIMESTAMP/index.html"
+          echo "<div class='card'><h1>🚀 Sessione di Test: $TIMESTAMP</h1><ul>" >> "deploy/runs/$TIMESTAMP/index.html"
 
-          find "Traction Control 2025-26" -name "*.cpp" | while read file; do
-            BASE_NAME=$(basename "$file")
-            
-            # CORREZIONE: Eseguiamo l'engine direttamente sulla cartella /app
-            docker run -v $(pwd):/app --workdir /app qa-engine engine "$file" 10
-            
-            # Ora report.html esiste perché il C++ lo crea nella stessa cartella
-            mv "report.html" "deploy/runs/$TIMESTAMP/$BASE_NAME.html"
-            echo "<li><a class='btn' href='$BASE_NAME.html'>📂 Analisi: $BASE_NAME</a></li>" >> "deploy/runs/$TIMESTAMP/index.html"
+          # Esecuzione Test
+          find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.m" -o -name "*.py" \) \
+          -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
+            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 8
+            sudo chmod 777 "$file.html" || true
+            if [ -f "$file.html" ]; then
+              FILE_NAME=$(basename "$file")
+              mv "$file.html" "deploy/runs/$TIMESTAMP/"
+              echo "<li>📄 <a href='$FILE_NAME.html'>$FILE_NAME</a></li>" >> "deploy/runs/$TIMESTAMP/index.html"
+            fi
           done
-          
-      - name: Recupero Cronologia e Deploy
+          echo "</ul><br><hr><a href='../../index.html'>⬅️ Torna alla Cronologia Globale</a></div></body></html>" >> "deploy/runs/$TIMESTAMP/index.html"
+
+      - name: Rigenera Home Page Globale
         run: |
-          # Prova a recuperare i vecchi test per non perderli
-          git clone --branch gh-pages https://github.com/${{ github.repository }}.git old_pages || true
-          if [ -d "old_pages/runs" ]; then cp -r old_pages/runs/* deploy/runs/; fi
-
-          # Genera la Home Page (Archivio Storico) con lo stesso stile
-          STYLE_HOME="<style>body{font-family:'Segoe UI',sans-serif;background:#f4f7f6;padding:40px;} .container{max-width:900px;margin:auto;} .session-card{background:white;padding:20px;margin-bottom:15px;border-left:10px solid #1B4332;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 5px rgba(0,0,0,0.1);text-decoration:none;color:inherit;transition:0.2s;} .session-card:hover{transform:translateX(10px); background:#f1f8f5;} h1{color:#1B4332; border-bottom:3px solid #1B4332; padding-bottom:10px;}</style>"
+          mkdir -p old_pages
+          # Recuperiamo la storia dal branch gh-pages
+          git clone --branch gh-pages --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git old_pages || true
           
-          echo "<html><head>$STYLE_HOME</head><body><div class='container'><h1>🏎️ Archivio QA E-Team</h1>" > deploy/index.html
+          # Uniamo i vecchi dati ai nuovi
+          if [ -d "old_pages/runs" ]; then
+            cp -r old_pages/runs/* deploy/runs/
+          fi
+
+          # Pagina principale dell'archivio
+          echo "<html><head><style>body{font-family:sans-serif;background:#e9ecef;padding:50px;} .container{max-width:800px;margin:auto;background:white;padding:40px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.1);} h1{color:#1a73e8;border-bottom:2px solid #1a73e8;padding-bottom:10px;} .session-link{display:block;padding:15px;margin:10px 0;background:#f8f9fa;border-left:5px solid #1a73e8;text-decoration:none;color:#333;font-weight:bold;transition:0.2s;} .session-link:hover{background:#eef2f7; transform:translateX(5px);}</style></head><body>" > deploy/index.html
+          echo "<div class='container'><h1>🏎️ E-Team Powertrain - Archivio QA</h1>" >> deploy/index.html
+          echo "<h3>Cronologia Sessioni:</h3>" >> deploy/index.html
+          
+          # Generazione automatica dei link per ogni cartella trovata
           ls -d deploy/runs/* 2>/dev/null | sort -r | while read dir; do
-            LABEL=$(basename "$dir")
-            echo "<a href='runs/$LABEL/index.html' class='session-card'><span>📅 Sessione del $LABEL</span><b>VEDI REPORT ⮕</b></a>" >> deploy/index.html
+            TIME_LABEL=$(basename "$dir")
+            echo "<a href='runs/$TIME_LABEL/index.html' class='session-link'>📂 Sessione del $TIME_LABEL</a>" >> deploy/index.html
           done
+          
           echo "</div></body></html>" >> deploy/index.html
 
-      - name: Upload Artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Deploy su GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: 'deploy/'
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./deploy
+          keep_files: true
