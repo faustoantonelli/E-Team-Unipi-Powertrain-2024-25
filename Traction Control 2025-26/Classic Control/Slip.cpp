@@ -1,3 +1,20 @@
+/*
+ * CALCOLATORE SLITTAMENTO AVANZATO CON COMPENSAZIONI DINAMICHE
+ * 
+ * Calcola lo slittamento percentuale delle ruote motrici con:
+ * 1. Compensazione accelerazione laterale
+ * 2. Rilevamento errori sensori
+ * 3. Filtraggio del rumore
+ * 4. Gestione casi limite (veicolo fermo, valori anomali)
+ * 
+ * FORMULA PRINCIPALE:
+ *   s = ((V_ruote - V_veicolo) × 100) / max(V_veicolo, V_min)
+ * 
+ * SOGLIA ADATTIVA:
+ *   S_limite = S_base + k_lat · |Ay| + k_long · |Ax|
+ */
+
+
 #include <iostream>
 #include <cmath> // Per fabsf (valore assoluto)
 

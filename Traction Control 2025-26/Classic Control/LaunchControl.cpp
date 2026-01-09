@@ -1,3 +1,21 @@
+/*
+ * SISTEMA LAUNCH CONTROL ADATTIVO
+ * 
+ * Sistema a due fasi per ottimizzare la partenza da fermo:
+ * 
+ * FASE 1 - RICERCA (freno premuto):
+ *   T_corrente += ΔT ogni ciclo finché: s < S_max
+ *   Quando s ≥ S_max: T_ottimale = (T_corrente - ΔT) · 0.95
+ *   
+ * FASE 2 - PARTENZA (freno rilasciato):
+ *   T_output = T_ottimale (coppia costante ottimizzata)
+ *   
+ * RESET: Sistema si resetta automaticamente quando V > 30 km/h
+ * 
+ * FORMULA SLITTAMENTO:
+ *   s = ((V_ruote - V_veicolo) × 100) / max(V_veicolo, V_min)
+ */
+
 #include <iostream>
 
 // --- FUNZIONE VEHICLE SPEED ---
