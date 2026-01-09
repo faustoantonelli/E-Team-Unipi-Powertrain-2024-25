@@ -136,7 +136,7 @@ public:
             string s_cls = (r.stato.find("PASS") != string::npos) ? "PASS" : 
                            (r.stato.find("WARN") != string::npos) ? "WARN" : "FAIL";
             
-            file << "tr><td><b>" << r.id << "</b></td>"
+            file << "<tr><td><b>" << r.id << "</b></td>"
                  << "<td><code>" << r.input << "</code></td>"
                  << "<td>" << r.output << "</td>"
                  << "<td><span class='badge " << s_cls << "'>" << r.stato << "</span></td>"
