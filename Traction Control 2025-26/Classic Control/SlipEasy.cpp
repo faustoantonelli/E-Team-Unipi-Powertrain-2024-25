@@ -1,3 +1,17 @@
+/*
+ * CALCOLATORE SLITTAMENTO SEMPLIFICATO - VERSIONE LIGHT
+ * 
+ * Calcolo rapido dello slittamento percentuale per sistemi embedded
+ * o debug. Usa formule base senza compensazioni avanzate.
+ * 
+ * FORMULA: s = ((V_ruote - V_veicolo) × 100) / max(V_veicolo, V_min)
+ * 
+ * V_ruote = (RLSpeed + RRSpeed) / 2  [media ruote posteriori]
+ * V_veicolo = (FLSpeed + FRSpeed) / 2 [media ruote anteriori]
+ * V_min = MIN_VEHICLE_SPEED [soglia anti-divisione-zero]
+ */
+
+
 #include <iostream>
 
 #define MAX_SLIP_STATIONARY 20.0f

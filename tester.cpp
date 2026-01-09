@@ -46,18 +46,26 @@ public:
     Tester(string t, int v) : target(t), num_vars(v) { srand(time(0)); }
 
     void eseguiAnalisiStatica() {
-        if (is_file_empty(target)) return;
-        // Analisi con Cppcheck
-        string cmd = "cppcheck --enable=all --error-exitcode=1 \"" + target + "\" >/dev/null 2>&1";
-        
-        string desc_ok = "<b>Sicurezza Codice:</b> Nessun memory leak o errore critico rilevato.";
-        string desc_warn = "<b>Suggerimento:</b> Rilevate potenziali inefficienze. Controllare inizializzazioni o stili.";
-
-        if (system(cmd.c_str()) == 0) 
-            risultati.push_back({"🛡️ STAT", "Analisi Statica", "-", "✅ PASS", "N/A", desc_ok});
-        else 
-            risultati.push_back({"🛡️ STAT", "Analisi Statica", "-", "⚠️ WARN", "N/A", desc_warn});
+    if (is_file_empty(target)) return;
+    
+    // Salviamo l'output di cppcheck in un file temporaneo per leggerlo
+    string log_file = "cppcheck_errors.txt";
+    string cmd = "cppcheck --enable=all --error-exitcode=1 \"" + target + "\" 2>" + log_file + " >/dev/null";
+    
+    if (system(cmd.c_str()) == 0) {
+        risultati.push_back({"🛡️ STAT", "Analisi Statica", "-", "✅ PASS", "N/A", "<b>Codice Pulito:</b> Nessun problema rilevato."});
+    } else {
+        // Leggiamo il file degli errori per popolare il report
+        ifstream ifs(log_file);
+        string line, error_details = "<b>Errori Rilevati:</b><br>";
+        int line_count = 0;
+        while (getline(ifs, line) && line_count < 5) { // Prendiamo i primi 5 errori per non intasare il report
+            error_details += "• " + line + "<br>";
+            line_count++;
+        }
+        risultati.push_back({"🛡️ STAT", "Analisi Statica", "-", "⚠️ WARN", "N/A", error_details});
     }
+}
 
     void eseguiTestDinamici() {
         if (is_file_empty(target)) return;
@@ -68,7 +76,7 @@ public:
             return;
         }
 
-        for (int i = 1; i <= 10; ++i) {
+        for (int i = 1; i <= 20; ++i) {
             string in_data = generate_random_input(num_vars);
             string cmd = "echo \"" + in_data + "\" | ./bin_test";
             char buffer[128];
