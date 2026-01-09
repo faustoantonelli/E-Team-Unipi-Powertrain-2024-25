@@ -1,4 +1,4 @@
-name: QA System with History Navigation
+name: QA System - E-Team Unified Dashboard
 
 on:
   push:
@@ -18,59 +18,48 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Engine
-        run: |
-          DOCKER_PATH=$(find . -name Dockerfile -print -quit)
-          docker build -t qa-engine -f "$DOCKER_PATH" .
+        run: docker build -t qa-engine .
 
-      - name: Prepara Cartelle e Run
+      - name: Esecuzione Test e Generazione Report
         run: |
           TIMESTAMP=$(date +'%Y-%m-%d_%H-%M')
           mkdir -p "deploy/runs/$TIMESTAMP"
           
-          # Indice della singola sessione
-          echo "<html><head><style>body{font-family:sans-serif;background:#f4f7f6;padding:40px;} .card{background:white;padding:30px;border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,0.1);} a{color:#1a73e8;text-decoration:none;font-weight:bold;} li{margin:10px 0;}</style></head><body>" > "deploy/runs/$TIMESTAMP/index.html"
-          echo "<div class='card'><h1>🚀 Sessione di Test: $TIMESTAMP</h1><ul>" >> "deploy/runs/$TIMESTAMP/index.html"
+          # Stile CSS unificato (Verde E-Team) per le pagine indice
+          STYLE="<style>body{font-family:'Segoe UI',sans-serif;background:#f4f7f6;color:#333;padding:40px;} .card{max-width:900px;margin:auto;background:white;padding:30px;border-top:8px solid #1B4332;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.1);} h1{color:#1B4332;text-transform:uppercase;} .btn{display:inline-block;padding:10px 20px;background:#1B4332;color:white;text-decoration:none;border-radius:5px;margin:5px;transition:0.3s;} .btn:hover{background:#2d5a47;} li{list-style:none;margin:10px 0;}</style>"
+          
+          echo "<html><head>$STYLE</head><body><div class='card'><h1>🚀 Sessione: $TIMESTAMP</h1><ul>" > "deploy/runs/$TIMESTAMP/index.html"
 
-          # Esecuzione Test
-          find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.m" -o -name "*.py" \) \
-          -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
-            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 8
-            sudo chmod 777 "$file.html" || true
-            if [ -f "$file.html" ]; then
-              FILE_NAME=$(basename "$file")
-              mv "$file.html" "deploy/runs/$TIMESTAMP/"
-              echo "<li>📄 <a href='$FILE_NAME.html'>$FILE_NAME</a></li>" >> "deploy/runs/$TIMESTAMP/index.html"
-            fi
+          # Esegue il tester su ogni file .cpp trovato
+          find "Traction Control 2025-26" -name "*.cpp" | while read file; do
+            BASE_NAME=$(basename "$file")
+            docker run -v $(pwd):/app qa-engine /engine "$file" 10
+            mv "report.html" "deploy/runs/$TIMESTAMP/$BASE_NAME.html"
+            echo "<li><a class='btn' href='$BASE_NAME.html'>📂 Analisi: $BASE_NAME</a></li>" >> "deploy/runs/$TIMESTAMP/index.html"
           done
-          echo "</ul><br><hr><a href='../../index.html'>⬅️ Torna alla Cronologia Globale</a></div></body></html>" >> "deploy/runs/$TIMESTAMP/index.html"
 
-      - name: Rigenera Home Page Globale
+          echo "</ul><br><a href='../../index.html'>⬅ Torna all'Archivio</a></div></body></html>" >> "deploy/runs/$TIMESTAMP/index.html"
+
+      - name: Recupero Cronologia e Deploy
         run: |
-          mkdir -p old_pages
-          # Recuperiamo la storia dal branch gh-pages
-          git clone --branch gh-pages --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git old_pages || true
-          
-          # Uniamo i vecchi dati ai nuovi
-          if [ -d "old_pages/runs" ]; then
-            cp -r old_pages/runs/* deploy/runs/
-          fi
+          # Prova a recuperare i vecchi test per non perderli
+          git clone --branch gh-pages https://github.com/${{ github.repository }}.git old_pages || true
+          if [ -d "old_pages/runs" ]; then cp -r old_pages/runs/* deploy/runs/; fi
 
-          # Pagina principale dell'archivio
-          echo "<html><head><style>body{font-family:sans-serif;background:#e9ecef;padding:50px;} .container{max-width:800px;margin:auto;background:white;padding:40px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.1);} h1{color:#1a73e8;border-bottom:2px solid #1a73e8;padding-bottom:10px;} .session-link{display:block;padding:15px;margin:10px 0;background:#f8f9fa;border-left:5px solid #1a73e8;text-decoration:none;color:#333;font-weight:bold;transition:0.2s;} .session-link:hover{background:#eef2f7; transform:translateX(5px);}</style></head><body>" > deploy/index.html
-          echo "<div class='container'><h1>🏎️ E-Team Powertrain - Archivio QA</h1>" >> deploy/index.html
-          echo "<h3>Cronologia Sessioni:</h3>" >> deploy/index.html
+          # Genera la Home Page (Archivio Storico) con lo stesso stile
+          STYLE_HOME="<style>body{font-family:'Segoe UI',sans-serif;background:#f4f7f6;padding:40px;} .container{max-width:900px;margin:auto;} .session-card{background:white;padding:20px;margin-bottom:15px;border-left:10px solid #1B4332;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 5px rgba(0,0,0,0.1);text-decoration:none;color:inherit;transition:0.2s;} .session-card:hover{transform:translateX(10px); background:#f1f8f5;} h1{color:#1B4332; border-bottom:3px solid #1B4332; padding-bottom:10px;}</style>"
           
-          # Generazione automatica dei link per ogni cartella trovata
+          echo "<html><head>$STYLE_HOME</head><body><div class='container'><h1>🏎️ Archivio QA E-Team</h1>" > deploy/index.html
           ls -d deploy/runs/* 2>/dev/null | sort -r | while read dir; do
-            TIME_LABEL=$(basename "$dir")
-            echo "<a href='runs/$TIME_LABEL/index.html' class='session-link'>📂 Sessione del $TIME_LABEL</a>" >> deploy/index.html
+            LABEL=$(basename "$dir")
+            echo "<a href='runs/$LABEL/index.html' class='session-card'><span>📅 Sessione del $LABEL</span><b>VEDI REPORT ⮕</b></a>" >> deploy/index.html
           done
-          
           echo "</div></body></html>" >> deploy/index.html
 
-      - name: Deploy su GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload Artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./deploy
-          keep_files: true
+          path: 'deploy/'
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
