@@ -12,7 +12,6 @@ float VehicleSpeed(float FLSpeed, float FRSpeed, float Ax, float Ay, float Az) {
     return 100.0f; 
 }
 
-
 int main() {
 
     float FLSpeed, FRSpeed, RLSpeed, RRSpeed, Ax, Ay, Az;
