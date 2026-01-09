@@ -42,16 +42,19 @@ jobs:
           echo "<div class='card'><h1>🏎️ Sessione di Test: $TIMESTAMP</h1><ul>" >> "deploy/runs/$TIMESTAMP/index.html"
 
           # 2. MODIFICA INPUT: Cambiato da 8 a 20
-          find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.m" -o -name "*.py" \) \
+          find "Traction Control 2025-26" -type f -name "*.cpp" \
           -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
-            # Qui passiamo '20' come argomento al tester
+            
+            # Esecuzione
             docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 20
             
-            sudo chmod 777 "$file.html" || true
+            # CRITICO: Sblocca i permessi del file creato da Docker (Root)
+            sudo chmod 666 "$file.html" || true
+            
             if [ -f "$file.html" ]; then
               FILE_NAME=$(basename "$file")
               mv "$file.html" "deploy/runs/$TIMESTAMP/"
-              echo "<li>📄 <a href='$FILE_NAME.html'>$FILE_NAME</a></li>" >> "deploy/runs/$TIMESTAMP/index.html"
+              echo "<li>📄 <a href='$FILE_NAME.html'>Analisi Tecnica: $FILE_NAME</a></li>" >> "deploy/runs/$TIMESTAMP/index.html"
             fi
           done
           echo "</ul><br><hr><a href='../../index.html' class='back-btn'>⬅️ Torna alla Cronologia</a></div></body></html>" >> "deploy/runs/$TIMESTAMP/index.html"

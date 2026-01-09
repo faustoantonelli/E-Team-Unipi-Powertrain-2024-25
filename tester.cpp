@@ -47,7 +47,7 @@ public:
 
     void eseguiAnalisiStatica() {
         if (is_file_empty(target)) return;
-        string cmd = "cppcheck --enable=all --template='[Linea {line}]: {message}' " + target + " 2> cppcheck_log.txt";
+        string cmd = "cppcheck --enable=all --template='[Linea {line}]: {message}' '" + target + "' 2> cppcheck_log.txt";
         system(cmd.c_str());
 
         ifstream logFile("cppcheck_log.txt");
@@ -65,8 +65,7 @@ public:
 
     void eseguiTestDinamici() {
         if (is_file_empty(target)) return;
-        
-        string compile_cmd = "g++ -O3 " + target + " -o bin_test 2>/dev/null";
+        string compile_cmd = "g++ -O3 '" + target + "' -o bin_test 2>/dev/null";
         if (system(compile_cmd.c_str()) != 0) {
             risultati.push_back({"🚫 BUILD", "Compilatore", "-", "❌ FAIL", "-", "Errore fatale: compilazione fallita."});
             return;

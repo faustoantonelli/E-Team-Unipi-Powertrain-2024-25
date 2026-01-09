@@ -122,6 +122,5 @@ int main() {
         std::cout << T_max << std::endl;
         prevVehicleSpeed = vSpeed_mps;
     }
-
     return 0;
 }
