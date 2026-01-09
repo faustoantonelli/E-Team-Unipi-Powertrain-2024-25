@@ -18,7 +18,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build Engine
-        run: docker build -t qa-engine .
+        run: |
+          # Cerca il Dockerfile ovunque nel progetto
+          DOCKER_PATH=$(find . -name Dockerfile -print -quit)
+          if [ -z "$DOCKER_PATH" ]; then
+            echo "❌ ERRORE: Dockerfile non trovato nel repository!"
+            exit 1
+          fi
+          docker build -t qa-engine -f "$DOCKER_PATH" .
 
       - name: Esecuzione Test e Generazione Report
         run: |
