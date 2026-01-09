@@ -25,21 +25,20 @@ jobs:
           TIMESTAMP=$(date +'%Y-%m-%d_%H-%M')
           mkdir -p "deploy/runs/$TIMESTAMP"
           
-          # Stile CSS unificato (Verde E-Team) per le pagine indice
-          STYLE="<style>body{font-family:'Segoe UI',sans-serif;background:#f4f7f6;color:#333;padding:40px;} .card{max-width:900px;margin:auto;background:white;padding:30px;border-top:8px solid #1B4332;border-radius:8px;box-shadow:0 4px 15px rgba(0,0,0,0.1);} h1{color:#1B4332;text-transform:uppercase;} .btn{display:inline-block;padding:10px 20px;background:#1B4332;color:white;text-decoration:none;border-radius:5px;margin:5px;transition:0.3s;} .btn:hover{background:#2d5a47;} li{list-style:none;margin:10px 0;}</style>"
-          
-          echo "<html><head>$STYLE</head><body><div class='card'><h1>🚀 Sessione: $TIMESTAMP</h1><ul>" > "deploy/runs/$TIMESTAMP/index.html"
+          STYLE="..." # Mantieni il tuo stile CSS
+          echo "<html><head>$STYLE</head><body>..." > "deploy/runs/$TIMESTAMP/index.html"
 
-          # Esegue il tester su ogni file .cpp trovato
           find "Traction Control 2025-26" -name "*.cpp" | while read file; do
             BASE_NAME=$(basename "$file")
-            docker run -v $(pwd):/app qa-engine /engine "$file" 10
+            
+            # CORREZIONE: Eseguiamo l'engine direttamente sulla cartella /app
+            docker run -v $(pwd):/app --workdir /app qa-engine engine "$file" 10
+            
+            # Ora report.html esiste perché il C++ lo crea nella stessa cartella
             mv "report.html" "deploy/runs/$TIMESTAMP/$BASE_NAME.html"
             echo "<li><a class='btn' href='$BASE_NAME.html'>📂 Analisi: $BASE_NAME</a></li>" >> "deploy/runs/$TIMESTAMP/index.html"
           done
-
-          echo "</ul><br><a href='../../index.html'>⬅ Torna all'Archivio</a></div></body></html>" >> "deploy/runs/$TIMESTAMP/index.html"
-
+          
       - name: Recupero Cronologia e Deploy
         run: |
           # Prova a recuperare i vecchi test per non perderli

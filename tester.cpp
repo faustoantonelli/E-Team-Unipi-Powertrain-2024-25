@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
     engine.eseguiAnalisiStatica();
     engine.eseguiTestDinamici();
     engine.stampaReport();
-    engine.generaReportHTML(string(argv[1]) + ".html"); 
+    engine.generaReportHTML("report.html"); 
 
     return 0;
 }
