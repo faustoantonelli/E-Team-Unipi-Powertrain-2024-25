@@ -27,14 +27,26 @@ jobs:
           TIMESTAMP=$(date +'%Y-%m-%d_%H-%M')
           mkdir -p "deploy/runs/$TIMESTAMP"
           
-          # Indice della singola sessione
-          echo "<html><head><style>body{font-family:sans-serif;background:#f4f7f6;padding:40px;} .card{background:white;padding:30px;border-radius:10px;box-shadow:0 4px 6px rgba(0,0,0,0.1);} a{color:#1a73e8;text-decoration:none;font-weight:bold;} li{margin:10px 0;}</style></head><body>" > "deploy/runs/$TIMESTAMP/index.html"
-          echo "<div class='card'><h1>🚀 Sessione di Test: $TIMESTAMP</h1><ul>" >> "deploy/runs/$TIMESTAMP/index.html"
+          # 1. MODIFICA ESTETICA: Colori E-Team (Arancio #ff6600 e Nero #1a1a1a)
+          STYLE="<style>
+            body{font-family:'Segoe UI',sans-serif;background:#1a1a1a;color:white;padding:40px;}
+            .card{background:#222;padding:30px;border-radius:15px;border-top:8px solid #ff6600;box-shadow:0 10px 20px rgba(0,0,0,0.5);}
+            h1{color:#ff6600;text-transform:uppercase;letter-spacing:2px;}
+            a{color:#ff6600;text-decoration:none;font-weight:bold;transition:0.3s;}
+            a:hover{color:white;}
+            li{margin:15px 0;padding:10px;background:#333;border-radius:5px;list-style:none;}
+            .back-btn{display:inline-block;margin-top:20px;padding:10px 20px;background:#ff6600;color:black;border-radius:5px;text-transform:uppercase;}
+          </style>"
 
-          # Esecuzione Test
+          echo "<html><head>$STYLE</head><body>" > "deploy/runs/$TIMESTAMP/index.html"
+          echo "<div class='card'><h1>🏎️ Sessione di Test: $TIMESTAMP</h1><ul>" >> "deploy/runs/$TIMESTAMP/index.html"
+
+          # 2. MODIFICA INPUT: Cambiato da 8 a 20
           find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.m" -o -name "*.py" \) \
           -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
-            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 8
+            # Qui passiamo '20' come argomento al tester
+            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 20
+            
             sudo chmod 777 "$file.html" || true
             if [ -f "$file.html" ]; then
               FILE_NAME=$(basename "$file")
@@ -42,28 +54,34 @@ jobs:
               echo "<li>📄 <a href='$FILE_NAME.html'>$FILE_NAME</a></li>" >> "deploy/runs/$TIMESTAMP/index.html"
             fi
           done
-          echo "</ul><br><hr><a href='../../index.html'>⬅️ Torna alla Cronologia Globale</a></div></body></html>" >> "deploy/runs/$TIMESTAMP/index.html"
+          echo "</ul><br><hr><a href='../../index.html' class='back-btn'>⬅️ Torna alla Cronologia</a></div></body></html>" >> "deploy/runs/$TIMESTAMP/index.html"
 
       - name: Rigenera Home Page Globale
         run: |
           mkdir -p old_pages
-          # Recuperiamo la storia dal branch gh-pages
           git clone --branch gh-pages --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git old_pages || true
           
-          # Uniamo i vecchi dati ai nuovi
           if [ -d "old_pages/runs" ]; then
             cp -r old_pages/runs/* deploy/runs/
           fi
 
-          # Pagina principale dell'archivio
-          echo "<html><head><style>body{font-family:sans-serif;background:#e9ecef;padding:50px;} .container{max-width:800px;margin:auto;background:white;padding:40px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.1);} h1{color:#1a73e8;border-bottom:2px solid #1a73e8;padding-bottom:10px;} .session-link{display:block;padding:15px;margin:10px 0;background:#f8f9fa;border-left:5px solid #1a73e8;text-decoration:none;color:#333;font-weight:bold;transition:0.2s;} .session-link:hover{background:#eef2f7; transform:translateX(5px);}</style></head><body>" > deploy/index.html
-          echo "<div class='container'><h1>🏎️ E-Team Powertrain - Archivio QA</h1>" >> deploy/index.html
-          echo "<h3>Cronologia Sessioni:</h3>" >> deploy/index.html
+          # 3. MODIFICA ESTETICA HOME: Stile "Dark Racing"
+          STYLE_HOME="<style>
+            body{font-family:'Segoe UI',sans-serif;background:#1a1a1a;color:white;padding:50px;}
+            .container{max-width:900px;margin:auto;}
+            h1{color:#ff6600;border-bottom:4px solid #ff6600;padding-bottom:15px;text-transform:uppercase;font-size:2.5em;}
+            .session-link{display:flex;justify-content:space-between;align-items:center;padding:20px;margin:15px 0;background:#222;border-left:8px solid #ff6600;text-decoration:none;color:white;font-weight:bold;border-radius:0 10px 10px 0;transition:0.3s;}
+            .session-link:hover{background:#333;transform:translateX(10px);box-shadow:0 0 15px rgba(255,102,0,0.3);}
+            .date-tag{color:#ff6600;font-size:0.9em;}
+          </style>"
+
+          echo "<html><head>$STYLE_HOME</head><body>" > deploy/index.html
+          echo "<div class='container'><h1>🏎️ E-Team Archivio QA</h1>" >> deploy/index.html
+          echo "<h3>Cronologia Sessioni di Analisi:</h3>" >> deploy/index.html
           
-          # Generazione automatica dei link per ogni cartella trovata
           ls -d deploy/runs/* 2>/dev/null | sort -r | while read dir; do
             TIME_LABEL=$(basename "$dir")
-            echo "<a href='runs/$TIME_LABEL/index.html' class='session-link'>📂 Sessione del $TIME_LABEL</a>" >> deploy/index.html
+            echo "<a href='runs/$TIME_LABEL/index.html' class='session-link'><span>📂 Sessione del Analisi</span><span class='date-tag'>$TIME_LABEL</span></a>" >> deploy/index.html
           done
           
           echo "</div></body></html>" >> deploy/index.html

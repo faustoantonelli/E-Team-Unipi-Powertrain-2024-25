@@ -123,6 +123,5 @@ int main() {
         prevVehicleSpeed = vSpeed_mps;
     }
 
-    
     return 0;
 }
