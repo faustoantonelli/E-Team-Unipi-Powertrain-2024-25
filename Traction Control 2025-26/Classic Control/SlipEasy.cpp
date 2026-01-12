@@ -1,3 +1,17 @@
+/*
+ * CALCOLATORE SLITTAMENTO SEMPLIFICATO - VERSIONE LIGHT
+ * 
+ * Calcolo rapido dello slittamento percentuale per sistemi embedded
+ * o debug. Usa formule base senza compensazioni avanzate.
+ * 
+ * FORMULA: s = ((V_ruote - V_veicolo) × 100) / max(V_veicolo, V_min)
+ * 
+ * V_ruote = (RLSpeed + RRSpeed) / 2  [media ruote posteriori]
+ * V_veicolo = (FLSpeed + FRSpeed) / 2 [media ruote anteriori]
+ * V_min = MIN_VEHICLE_SPEED [soglia anti-divisione-zero]
+ */
+
+
 #include <iostream>
 
 #define MAX_SLIP_STATIONARY 20.0f
@@ -9,6 +23,7 @@ float VehicleSpeed(float FLSpeed, float FRSpeed, float Ax, float Ay, float Az) {
     return 100.0f; // Valore per il test
 }
 
+
 int main() {
     float FLSpeed, FRSpeed, RLSpeed, RRSpeed, Ax, Ay, Az;
     while (std::cin >> FLSpeed >> FRSpeed >> RLSpeed >> RRSpeed >> Ax >> Ay >> Az) {
@@ -17,6 +32,7 @@ int main() {
             std::cout << 0 << std::endl;
             continue;
         }
+        
         float avgRearSpeed = (RLSpeed + RRSpeed) / 2.0f;
         float RefSpeed = (vSpeed < MIN_VEHICLE_SPEED) ? MIN_VEHICLE_SPEED : vSpeed;
         float PercSlip = ((avgRearSpeed - vSpeed) * 100.0f) / RefSpeed;
