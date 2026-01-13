@@ -12,7 +12,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 # 1. Installazione strumenti di analisi e compilazione
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cppcheck \
-    # Usiamo build-essential per avere tutte le librerie C++ necessarie a cppcheck e g++
     build-essential \
     valgrind \
     python3 \
@@ -21,13 +20,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     aspell \
     aspell-it \
     aspell-en \
-    # Pacchetti LaTeX: aggiungiamo 'plain-generic' per evitare errori di file mancanti (.sty)
     texlive-latex-base \
     texlive-latex-recommended \
     texlive-plain-generic \
     texlive-fonts-recommended \
     texlive-lang-italian \
-    # Fondamentali per i caratteri e la sicurezza
     locales \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*

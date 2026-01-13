@@ -46,7 +46,7 @@ jobs:
           -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
             
             # Esecuzione
-            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 20
+            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 8 
             
             # CRITICO: Sblocca i permessi del file creato da Docker (Root)
             sudo chmod 666 "$file.html" || true
