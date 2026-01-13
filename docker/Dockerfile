@@ -14,17 +14,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     cppcheck \
     build-essential \
     valgrind \
-    python3 \
-    octave \
-    chktex \
-    aspell \
-    aspell-it \
-    aspell-en \
-    texlive-latex-base \
-    texlive-latex-recommended \
-    texlive-plain-generic \
-    texlive-fonts-recommended \
-    texlive-lang-italian \
     locales \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*

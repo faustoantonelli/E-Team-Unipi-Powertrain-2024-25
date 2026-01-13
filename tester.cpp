@@ -70,7 +70,6 @@ public:
             risultati.push_back({"🚫 BUILD", "Compilatore", "-", "❌ FAIL", "-", "Errore fatale: compilazione fallita."});
             return;
         }
-
         // 20 Test Casuali
         for (int i = 1; i <= 20; ++i) {
             string input = generate_random_input(num_vars);
