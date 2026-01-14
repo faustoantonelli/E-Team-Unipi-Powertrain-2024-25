@@ -14,7 +14,6 @@
  *   S_limite = S_base + k_lat · |Ay| + k_long · |Ax|
  */
 
-
 #include <iostream>
 #include <cmath> // Per fabsf (valore assoluto)
 
