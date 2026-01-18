@@ -11,6 +11,9 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # 1. Installazione strumenti di analisi e compilazione
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    valgrind \
     cppcheck \
     build-essential \
     valgrind \

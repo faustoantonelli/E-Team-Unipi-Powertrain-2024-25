@@ -15,7 +15,7 @@ jobs:
     steps:
       - name: Checkout Codice
         uses: actions/checkout@v4
-
+        
       - name: Build Engine
         run: |
           DOCKER_PATH=$(find . -name Dockerfile -print -quit)
@@ -41,7 +41,7 @@ jobs:
           echo "<div class='card'><h1>🏎️ Sessione di Test: $TIMESTAMP</h1><ul>" >> "deploy/runs/$TIMESTAMP/index.html"
 
           # 2. MODIFICA INPUT: Cambiato da 8 a 20
-          find "Traction Control 2025-26" -type f -name "*.cpp" \
+          find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.c" \) \
           -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
             
             # Esecuzione

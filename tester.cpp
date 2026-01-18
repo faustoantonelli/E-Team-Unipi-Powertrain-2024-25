@@ -62,10 +62,16 @@ public:
             risultati.push_back({"🛡️ STAT", "Analisi Statica", "-", "⚠️ WARN", "0ms", "<b>Rilevati potenziali problemi:</b><br><small>" + errors + "</small>"});
         }
     }
+    
 
     void eseguiTestDinamici() {
         if (is_file_empty(target)) return;
-        string compile_cmd = "g++ -O3 '" + target + "' -o bin_test 2>/dev/null";
+
+        // --- LOGICA IBRIDA C/C++ ---
+        string extension = target.substr(target.find_last_of(".") + 1);
+        string compiler = (extension == "c") ? "gcc" : "g++";
+        string compile_cmd = compiler + " -O3 '" + target + "' -o bin_test -lm 2>/dev/null";
+        
         if (system(compile_cmd.c_str()) != 0) {
             risultati.push_back({"🚫 BUILD", "Compilatore", "-", "❌ FAIL", "-", "Errore fatale: compilazione fallita."});
             return;
