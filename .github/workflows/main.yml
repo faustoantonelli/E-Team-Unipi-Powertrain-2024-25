@@ -1,96 +1,11 @@
-name: QA System with History Navigation
-
-on:
-  push:
-    branches: ["main"]
-  workflow_dispatch: 
-
-permissions:
-  contents: write
-  pages: write
-
+name: C++ CI
+on: [push, pull_request]
 jobs:
-  qa-test:
+  build-and-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Codice
-        uses: actions/checkout@v4
-        
-      - name: Build Engine
+      - uses: actions/checkout@v4
+      - name: Build and Run Tests
         run: |
-          DOCKER_PATH=$(find . -name Dockerfile -print -quit)
-          docker build -t qa-engine -f "$DOCKER_PATH" .
-
-      - name: Prepara Cartelle e Run
-        run: |
-          TIMESTAMP=$(date +'%Y-%m-%d_%H-%M')
-          mkdir -p "deploy/runs/$TIMESTAMP"
-          
-          # 1. MODIFICA ESTETICA: Colori E-Team (Arancio #ff6600 e Nero #1a1a1a)
-          STYLE="<style>
-            body{font-family:'Segoe UI',sans-serif;background:#1a1a1a;color:white;padding:40px;}
-            .card{background:#222;padding:30px;border-radius:15px;border-top:8px solid #ff6600;box-shadow:0 10px 20px rgba(0,0,0,0.5);}
-            h1{color:#ff6600;text-transform:uppercase;letter-spacing:2px;}
-            a{color:#ff6600;text-decoration:none;font-weight:bold;transition:0.3s;}
-            a:hover{color:white;}
-            li{margin:15px 0;padding:10px;background:#333;border-radius:5px;list-style:none;}
-            .back-btn{display:inline-block;margin-top:20px;padding:10px 20px;background:#ff6600;color:black;border-radius:5px;text-transform:uppercase;}
-          </style>"
-
-          echo "<html><head>$STYLE</head><body>" > "deploy/runs/$TIMESTAMP/index.html"
-          echo "<div class='card'><h1>🏎️ Sessione di Test: $TIMESTAMP</h1><ul>" >> "deploy/runs/$TIMESTAMP/index.html"
-
-          # 2. MODIFICA INPUT: Cambiato da 8 a 20
-          find "Traction Control 2025-26" -type f \( -name "*.cpp" -o -name "*.c" \) \
-          -not -path "*/tester.cpp" -print0 | while IFS= read -r -d '' file; do
-            
-            # Esecuzione
-            docker run --rm -v ${{ github.workspace }}:/github/workspace qa-engine "$file" 8 
-            
-            # CRITICO: Sblocca i permessi del file creato da Docker (Root)
-            sudo chmod 666 "$file.html" || true
-            
-            if [ -f "$file.html" ]; then
-              FILE_NAME=$(basename "$file")
-              mv "$file.html" "deploy/runs/$TIMESTAMP/"
-              echo "<li>📄 <a href='$FILE_NAME.html'>Analisi Tecnica: $FILE_NAME</a></li>" >> "deploy/runs/$TIMESTAMP/index.html"
-            fi
-          done
-          echo "</ul><br><hr><a href='../../index.html' class='back-btn'>⬅️ Torna alla Cronologia</a></div></body></html>" >> "deploy/runs/$TIMESTAMP/index.html"
-
-      - name: Rigenera Home Page Globale
-        run: |
-          mkdir -p old_pages
-          git clone --branch gh-pages --single-branch https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git old_pages || true
-          
-          if [ -d "old_pages/runs" ]; then
-            cp -r old_pages/runs/* deploy/runs/
-          fi
-
-          # 3. MODIFICA ESTETICA HOME: Stile "Dark Racing"
-          STYLE_HOME="<style>
-            body{font-family:'Segoe UI',sans-serif;background:#1a1a1a;color:white;padding:50px;}
-            .container{max-width:900px;margin:auto;}
-            h1{color:#ff6600;border-bottom:4px solid #ff6600;padding-bottom:15px;text-transform:uppercase;font-size:2.5em;}
-            .session-link{display:flex;justify-content:space-between;align-items:center;padding:20px;margin:15px 0;background:#222;border-left:8px solid #ff6600;text-decoration:none;color:white;font-weight:bold;border-radius:0 10px 10px 0;transition:0.3s;}
-            .session-link:hover{background:#333;transform:translateX(10px);box-shadow:0 0 15px rgba(255,102,0,0.3);}
-            .date-tag{color:#ff6600;font-size:0.9em;}
-          </style>"
-
-          echo "<html><head>$STYLE_HOME</head><body>" > deploy/index.html
-          echo "<div class='container'><h1>🏎️ E-Team Archivio QA</h1>" >> deploy/index.html
-          echo "<h3>Cronologia Sessioni di Analisi:</h3>" >> deploy/index.html
-          
-          ls -d deploy/runs/* 2>/dev/null | sort -r | while read dir; do
-            TIME_LABEL=$(basename "$dir")
-            echo "<a href='runs/$TIME_LABEL/index.html' class='session-link'><span>📂 Sessione del Analisi</span><span class='date-tag'>$TIME_LABEL</span></a>" >> deploy/index.html
-          done
-          
-          echo "</div></body></html>" >> deploy/index.html
-
-      - name: Deploy su GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./deploy
-          keep_files: true
+          docker build -t tc-test -f docker/Dockerfile .
+          docker run --rm tc-test

@@ -16,9 +16,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Configura l'area di lavoro
 WORKDIR /app
 
-# Copia i sorgenti nel container
+# Copia l'intero repository all'interno del container
 COPY . .
 
 # Comando di default: configura, builda ed esegue i test
-# Se i test falliscono, il container restituisce un errore (fondamentale per GitHub Actions)
+# Se i test falliscono, il container restituisce un codice di errore alla GitHub Action
 ENTRYPOINT ["sh", "-c", "mkdir -p build && cd build && cmake .. && make && ./unit_tests"]

@@ -14,9 +14,8 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 # 2. Target: Libreria di Controllo (il tuo algoritmo)
-# Qui aggiungerai i file .cpp della cartella src/
-add_library(control_logic INTERFACE)
-target_include_directories(control_logic INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_library(control_logic src/TractionControl.cpp src/VehicleDynamics.cpp)
+target_include_directories(control_logic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # 3. Target: Eseguibile dei Test
 add_executable(unit_tests tests/unit_tests.cpp)
