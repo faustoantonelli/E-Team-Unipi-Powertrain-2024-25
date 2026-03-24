@@ -4,14 +4,14 @@
 ![MATLAB](https://img.shields.io/badge/MATLAB-R2023b-orange.svg?style=flat-square&logo=mathworks)
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue.svg?logo=github-actions)
 
-Sviluppo del sistema di **Traction Control (TC)** e **Launch Control (LC)** per la vettura dell'E-Team Squadra Corse (Università di Pisa). [cite_start]Il progetto integra algoritmi di controllo in tempo reale sviluppati in **C++** e modelli di simulazione dinamica in **MATLAB/Simulink**[cite: 3].
+Sviluppo del sistema di **Traction Control (TC)** e **Launch Control (LC)** per la vettura dell'E-Team Squadra Corse (Università di Pisa). Il progetto integra algoritmi di controllo in tempo reale sviluppati in **C++** e modelli di simulazione dinamica in **MATLAB/Simulink**.
 
 ---
 
 ## 🎯 Obiettivi del Progetto
-* [cite_start]**Monitoraggio Slip Ratio**: Calcolo in tempo reale dello slittamento longitudinale basato sui sensori di velocità angolare delle ruote[cite: 3].
-* [cite_start]**Controllo della Coppia**: Algoritmi di modulazione (PID/LQR) per massimizzare il grip in accelerazione[cite: 3].
-* [cite_start]**Simulazione Dinamica**: Validazione tramite modelli di pneumatici (Pacejka Magic Formula)[cite: 3].
+* **Monitoraggio Slip Ratio**: Calcolo in tempo reale dello slittamento longitudinale basato sui sensori di velocità angolare delle ruote.
+* **Controllo della Coppia**: Algoritmi di modulazione (PID/LQR) per massimizzare il grip in accelerazione.
+* **Simulazione Dinamica**: Validazione tramite modelli di pneumatici (Pacejka Magic Formula).
 
 ## 🏗️ Architettura e Moduli
 Il repository è organizzato in moduli indipendenti per garantire la testabilità unitaria:
