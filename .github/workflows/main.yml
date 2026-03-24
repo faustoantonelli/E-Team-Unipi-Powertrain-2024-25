@@ -1,11 +1,26 @@
 name: C++ CI
 on: [push, pull_request]
+
+env:
+  # Silenzia il famoso warning di Node.js che hai visto prima
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - name: Build and Run Tests
         run: |
           docker build -t tc-test -f docker/Dockerfile .
-          docker run --rm tc-test
+          # Il comando 'tee' stampa a schermo ma salva anche tutto in un file txt
+          docker run --rm tc-test | tee test_report.txt
+          
+      - name: Produci Documento di Prova
+        uses: actions/upload-artifact@v4
+        # Assicurati che il file venga salvato anche se un test fallisce
+        if: always() 
+        with:
+          name: Report-Test-Ufficiali
+          path: test_report.txt

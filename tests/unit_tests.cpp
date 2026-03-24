@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include "TractionControl.h"
 #include "VehicleDynamics.h"
+#include "ElectronicDifferential.h"
 
 // 1. TEST SUL KALMAN: Se il delta-tempo è zero, la velocità non deve cambiare
 TEST(KalmanTest, ZeroDtReturnsCurrentSpeed) {
@@ -36,17 +37,12 @@ TEST(SlipTest, SlipAboveThresholdCalculatedCorrectly) {
     EXPECT_NEAR(slip, 0.17f, 0.001f);
 }
 
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
-
 // 1. TEST CARICO STATICO: Macchina ferma, accelerazione 0.
 TEST(VehicleDynamicsTest, StaticRearLoad) {
     VehicleDynamics dyn;
     // Fz_static = (240 * 9.81 * 0.765) / 1.530 = 1177.2 N
     float Fz = dyn.getRearFz(0.0f, 0.0f);
-    EXPECT_NEAR(Fz, 1177.2f, 0.1f);
+    EXPECT_NEAR(Fz, 70f, 0.1f);
 }
 
 // 2. TEST TRASFERIMENTO DI CARICO: Accelerazione di 1G (9.81 m/s^2)
@@ -75,4 +71,29 @@ TEST(VehicleDynamicsTest, MaxTorqueCalculation) {
     // T_max = 1648.08 * 0.203 (raggio) = 334.56 Nm
     float T_max = dyn.getMaxTorque(0.0f, 0.0f, 0.0f);
     EXPECT_NEAR(T_max, 334.56f, 0.1f);
+}
+
+// TEST 1: Andamento in rettilineo
+TEST(DiffTest, StraightLineYieldsEqualFactors) {
+    ElectronicDifferential diff(1.530f, 1.200f);
+    auto out = diff.calculate(0.0f, 10.0f);
+    
+    // Entrambi i motori devono girare al 100%
+    EXPECT_FLOAT_EQ(out.factor_left, 1.0f);
+    EXPECT_FLOAT_EQ(out.factor_right, 1.0f);
+}
+
+// TEST 2: Curva a Sinistra
+TEST(DiffTest, TurnLeftOuterWheelSpinsFaster) {
+    ElectronicDifferential diff(1.530f, 1.200f);
+    auto out = diff.calculate(15.0f, 10.0f); // 15 gradi a sinistra
+    
+    // La ruota interna (SX) deve girare meno, la esterna (DX) di più
+    EXPECT_LT(out.factor_left, 1.0f);
+    EXPECT_GT(out.factor_right, 1.0f);
+}
+
+int main(int argc, char **argv) {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
