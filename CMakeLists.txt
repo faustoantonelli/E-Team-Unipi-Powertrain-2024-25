@@ -18,7 +18,7 @@ add_library(control_logic
     src/TractionControl.cpp
     src/VehicleDynamics.cpp
     src/ElectronicDifferential.cpp
-    src/AdvancedSlip.cpp
+    src/AdvanceSlip.cpp
     src/LaunchControl.cpp
 )
 target_include_directories(control_logic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
