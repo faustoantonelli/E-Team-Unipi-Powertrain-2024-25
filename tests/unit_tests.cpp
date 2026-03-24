@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
-#include "TractionControl.h"
+#include "BeautifullTractionControl.h" 
 #include "VehicleDynamics.h"
 #include "ElectronicDifferential.h"
+#include "AdvancedSlip.h"
 
 // 1. TEST SUL KALMAN: Se il delta-tempo è zero, la velocità non deve cambiare
 TEST(KalmanTest, ZeroDtReturnsCurrentSpeed) {
@@ -20,7 +21,8 @@ TEST(DifferentialTest, StraightSteering) {
 // 3. TEST DELLO SLIP: Protezione a bassa velocità
 TEST(SlipTest, LowVehicleSpeedReturnsZero) {
     // Macchina quasi ferma (0.5 m/s), anche se la ruota gira fortissimo (50 rad/s) lo slip deve essere bloccato a 0
-    float slip = calculate_slip_RL(0.5f, 10.0f, 50.0f);
+    // Modificato: aggiunti raggio (0.254f) e soglia (0.13f)
+    float slip = calculate_slip_RL(0.5f, 10.0f, 50.0f, 0.254f, 0.13f);
     EXPECT_EQ(slip, 0.0f);
 }
 
@@ -28,12 +30,14 @@ TEST(SlipTest, LowVehicleSpeedReturnsZero) {
 TEST(SlipTest, SlipAboveThresholdCalculatedCorrectly) {
     // v_target = 10 m/s. Vogliamo che la ruota vada a 13 m/s (Slip = 0.3)
     // 13 m/s diviso raggio(0.254) = 51.18 rad/s
-    float w_rl_slip = 13.0f / 0.254f;
+    float raggio = 0.254f;
+    float soglia = 0.13f;
+    float w_rl_slip = 13.0f / raggio;
     
-    float slip = calculate_slip_RL(10.0f, 10.0f, w_rl_slip);
+    // Modificato: aggiunti raggio e soglia alla chiamata
+    float slip = calculate_slip_RL(10.0f, 10.0f, w_rl_slip, raggio, soglia);
     
     // Ci aspettiamo Slip(0.3) - Soglia(0.13) = 0.17. 
-    // EXPECT_NEAR serve perché i float hanno imprecisioni decimali
     EXPECT_NEAR(slip, 0.17f, 0.001f);
 }
 
@@ -93,6 +97,37 @@ TEST(DiffTest, TurnLeftOuterWheelSpinsFaster) {
     EXPECT_GT(out.factor_right, 1.0f);
 }
 
+TEST(AdvancedSlipTest, NormalOperation) {
+    AdvancedSlip slipCalc;
+    // vSpeed=10, RLSpeed=12, RRSpeed=12, Ay=0
+    // Media ruote = 12. Diff = 2. Ref = 10. Slip = (2 * 100)/10 = 20%
+    SlipResult res = slipCalc.calculate(10.0f, 12.0f, 12.0f, 0.0f);
+    
+    EXPECT_FLOAT_EQ(res.slip_percent, 20.0f);
+    EXPECT_FALSE(res.sensor_error);
+    EXPECT_FALSE(res.exceeded_threshold); // Soglia base è 20.0, non la supera
+}
+
+TEST(AdvancedSlipTest, LateralAccelerationRaisesThreshold) {
+    AdvancedSlip slipCalc;
+    // vSpeed=10, ruote=12.5 -> Slip 25%. Ay=12.0 (curva molto stretta)
+    // Soglia adattiva = 20.0 + (12 * 0.5) = 26.0
+    // Slip (25%) < Soglia (26%) -> NON deve segnalare il superamento!
+    SlipResult res = slipCalc.calculate(10.0f, 12.5f, 12.5f, 12.0f);
+    
+    EXPECT_FLOAT_EQ(res.slip_percent, 25.0f);
+    EXPECT_FALSE(res.exceeded_threshold);
+}
+
+TEST(AdvancedSlipTest, DetectsSensorError) {
+    AdvancedSlip slipCalc;
+    // Differenza enorme tra le ruote (100 vs 10)
+    SlipResult res = slipCalc.calculate(10.0f, 100.0f, 10.0f, 0.0f);
+    
+    EXPECT_TRUE(res.sensor_error);
+}
+
+// Modificato: MAIN spostato alla fine (Best Practice)
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
