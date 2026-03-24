@@ -3,6 +3,7 @@
 #include "VehicleDynamics.h"
 #include "ElectronicDifferential.h"
 #include "AdvancedSlip.h"
+#include "LaunchControl.h"
 
 // 1. TEST SUL KALMAN: Se il delta-tempo è zero, la velocità non deve cambiare
 TEST(KalmanTest, ZeroDtReturnsCurrentSpeed) {
@@ -125,6 +126,38 @@ TEST(AdvancedSlipTest, DetectsSensorError) {
     SlipResult res = slipCalc.calculate(10.0f, 100.0f, 10.0f, 0.0f);
     
     EXPECT_TRUE(res.sensor_error);
+}
+
+TEST(LaunchControlTest, DefaultLaunchWithoutSearch) {
+    LaunchControl lc;
+    // Freno rilasciato (false), sistema non ha cercato il limite
+    float torque = lc.update(0.0f, 0.0f, false);
+    EXPECT_FLOAT_EQ(torque, 50.0f); // Si aspetta il valore di default
+}
+
+TEST(LaunchControlTest, SearchPhaseIncrementsTorque) {
+    LaunchControl lc;
+    // Freno premuto (true), slip bassissimo, dovrebbe incrementare la coppia
+    float t1 = lc.update(0.0f, 2.0f, true);
+    EXPECT_FLOAT_EQ(t1, 5.0f);
+    
+    float t2 = lc.update(0.0f, 2.0f, true);
+    EXPECT_FLOAT_EQ(t2, 10.0f);
+    EXPECT_FALSE(lc.isLimitReached());
+}
+
+TEST(LaunchControlTest, FindsLimitAndSavesOptimal) {
+    LaunchControl lc;
+    // Portiamo la rampa artificialmente vicino al limite
+    lc.update(0.0f, 2.0f, true); // 5.0
+    lc.update(0.0f, 2.0f, true); // 10.0
+    
+    // Ora lo slip supera il limite (15.0)
+    float t_limit = lc.update(0.0f, 20.0f, true); 
+    
+    EXPECT_TRUE(lc.isLimitReached());
+    // Formula: (current - ramp) * 0.95 = (10.0 - 5.0) * 0.95 = 4.75
+    EXPECT_FLOAT_EQ(lc.getOptimalTorque(), 4.75f);
 }
 
 // Modificato: MAIN spostato alla fine (Best Practice)
