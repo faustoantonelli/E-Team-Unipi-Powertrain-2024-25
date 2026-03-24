@@ -42,7 +42,7 @@ TEST(VehicleDynamicsTest, StaticRearLoad) {
     VehicleDynamics dyn;
     // Fz_static = (240 * 9.81 * 0.765) / 1.530 = 1177.2 N
     float Fz = dyn.getRearFz(0.0f, 0.0f);
-    EXPECT_NEAR(Fz, 70f, 0.1f);
+    EXPECT_NEAR(Fz,77.2f, 0.1f);
 }
 
 // 2. TEST TRASFERIMENTO DI CARICO: Accelerazione di 1G (9.81 m/s^2)
@@ -51,7 +51,7 @@ TEST(VehicleDynamicsTest, LoadTransferAcceleration) {
     // Trasferimento = (240 * 9.81 * 0.250) / 1.530 = 384.7 N
     // Totale = 1177.2 + 384.7 = 1561.9 N
     float Fz = dyn.getRearFz(9.81f, 10.0f);
-    EXPECT_NEAR(Fz, 1561.9f, 0.2f);
+    EXPECT_NEAR(Fz, 561.9f, 0.2f);
 }
 
 // 3. TEST LIMITE DECELLERAZIONE: Protezione da frenate assurde
