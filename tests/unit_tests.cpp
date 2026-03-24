@@ -2,7 +2,7 @@
 #include "TractionControl.h" 
 #include "VehicleDynamics.h"
 #include "ElectronicDifferential.h"
-#include "AdvanceSlip.h"
+#include "AdvancedSlip.h"
 #include "LaunchControl.h"
 
 // 1. TEST SUL KALMAN: Se il delta-tempo è zero, la velocità non deve cambiare
@@ -98,8 +98,8 @@ TEST(DiffTest, TurnLeftOuterWheelSpinsFaster) {
     EXPECT_GT(out.factor_right, 1.0f);
 }
 
-TEST(AdvanceSlipTest, NormalOperation) {
-    AdvanceSlip slipCalc;
+TEST(AdvancedSlipTest, NormalOperation) {
+    AdvancedSlip slipCalc;
     // vSpeed=10, RLSpeed=12, RRSpeed=12, Ay=0
     // Media ruote = 12. Diff = 2. Ref = 10. Slip = (2 * 100)/10 = 20%
     SlipResult res = slipCalc.calculate(10.0f, 12.0f, 12.0f, 0.0f);
@@ -109,8 +109,8 @@ TEST(AdvanceSlipTest, NormalOperation) {
     EXPECT_FALSE(res.exceeded_threshold); // Soglia base è 20.0, non la supera
 }
 
-TEST(AdvanceSlipTest, LateralAccelerationRaisesThreshold) {
-    AdvanceSlip slipCalc;
+TEST(AdvancedSlipTest, LateralAccelerationRaisesThreshold) {
+    AdvancedSlip slipCalc;
     // vSpeed=10, ruote=12.5 -> Slip 25%. Ay=12.0 (curva molto stretta)
     // Soglia adattiva = 20.0 + (12 * 0.5) = 26.0
     // Slip (25%) < Soglia (26%) -> NON deve segnalare il superamento!
@@ -120,8 +120,8 @@ TEST(AdvanceSlipTest, LateralAccelerationRaisesThreshold) {
     EXPECT_FALSE(res.exceeded_threshold);
 }
 
-TEST(AdvanceSlipTest, DetectsSensorError) {
-    AdvanceSlip slipCalc;
+TEST(AdvancedSlipTest, DetectsSensorError) {
+    AdvancedSlip slipCalc;
     // Differenza enorme tra le ruote (100 vs 10)
     SlipResult res = slipCalc.calculate(10.0f, 100.0f, 10.0f, 0.0f);
     
