@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "BeautifullTractionControl.h" 
+#include "TractionControl.h" 
 #include "VehicleDynamics.h"
 #include "ElectronicDifferential.h"
 #include "AdvancedSlip.h"
