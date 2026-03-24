@@ -1,3 +1,19 @@
-.DS_Store
+# Binari e build
+build/
+bin/
 *.o
-bin_test
+*.exe
+
+# Output di test e log
+cppcheck_log.txt
+*.html
+results/
+
+# File di sistema e IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Documenti temporanei
+*.pdf
+*.png (tranne quelle esplicitamente per il README)
