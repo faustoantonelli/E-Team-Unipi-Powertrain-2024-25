@@ -13,6 +13,7 @@ VehicleDynamics::VehicleDynamics() {}
 // Stima del coefficiente d'attrito
 float VehicleDynamics::estimateMu(float vSpeed_mps, float slipPercent) {
     (void)vSpeed_mps;
+    
     float speedFactor = std::max(0.7f, 1.0f - vSpeed_mps * 0.01f);
     float slipFactor = std::max(0.8f, 1.0f - slipPercent * 0.02f);
     return p.mu_dry * speedFactor * slipFactor;
