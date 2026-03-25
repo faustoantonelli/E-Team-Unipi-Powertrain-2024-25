@@ -7,6 +7,8 @@ ElectronicDifferential::ElectronicDifferential(float wheelbase, float track_widt
     : L(wheelbase), Tr(track_width) {}
 
 DiffOutput ElectronicDifferential::calculate(float steer_angle_deg, float vehicle_speed) {
+    (void)vehicle_speed;
+
     DiffOutput out = {1.0f, 1.0f};
 
     // 1. Conversione in radianti
