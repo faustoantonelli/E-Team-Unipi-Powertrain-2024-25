@@ -24,6 +24,16 @@ add_library(control_logic
     src/LaunchControl.cpp
     src/PIDController.cpp
 )
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    target_compile_options(control_logic PRIVATE 
+        -Wall 
+        -Wextra 
+        -Wpedantic 
+        -Werror
+    )
+endif()
+
 target_include_directories(control_logic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # 3. Target: Eseguibile dei Test
