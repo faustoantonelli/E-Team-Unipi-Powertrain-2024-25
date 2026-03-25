@@ -1,35 +1,49 @@
-# 🏎️ E-Team Powertrain - Traction Control 2025/26
+# 🏎️ E-Team Powertrain - Traction & Launch Control
 
-![C++](https://img.shields.io/badge/C++-17-blue.svg?style=flat-square&logo=c%2B%2B)
-![MATLAB](https://img.shields.io/badge/MATLAB-R2023b-orange.svg?style=flat-square&logo=mathworks)
-![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue.svg?logo=github-actions)
+![C++17](https://img.shields.io/badge/C++-17-blue.svg?style=flat-square&logo=c%2B%2B)
+![CMake](https://img.shields.io/badge/CMake-3.14+-green.svg?style=flat-square&logo=cmake)
+![CI/CD](https://img.shields.io/badge/CI-GitHub%20Actions-success.svg?logo=github-actions)
+![Testing](https://img.shields.io/badge/Tests-GTest-orange.svg)
+![Doc](https://img.shields.io/badge/Docs-Doxygen-lightgrey.svg)
 
-Sviluppo del sistema di **Traction Control (TC)** e **Launch Control (LC)** per la vettura dell'E-Team Squadra Corse (Università di Pisa).
-Il progetto integra algoritmi di controllo in tempo reale sviluppati in **C++** e modelli di simulazione dinamica in **MATLAB/Simulink**.
+Progetto di Sviluppo Software per il sistema di **Traction Control (TC)** e **Launch Control (LC)** della vettura dell'E-Team Squadra Corse (Università di Pisa). 
+
+Questo repository pone una forte enfasi sulle **best practice di ingegneria del software**: architettura modulare, test unitari rigorosi, Continuous Integration (CI) in ambiente containerizzato e generazione automatica della documentazione.
 
 ---
 
-## 🎯 Obiettivi del Progetto
-* **Monitoraggio Slip Ratio**: Calcolo in tempo reale dello slittamento longitudinale basato sui sensori di velocità angolare delle ruote.
-* **Controllo della Coppia**: Algoritmi di modulazione (PID/LQR) per massimizzare il grip in accelerazione.
-* **Simulazione Dinamica**: Validazione tramite modelli di pneumatici (Pacejka Magic Formula).
+## 🎯 Architettura e Moduli C++
 
-## 🏗️ Architettura e Moduli
-Il repository è organizzato in moduli indipendenti per garantire la testabilità unitaria:
-* **`slip_estimator`**: Calcolo dello slittamento basato sulla velocità del veicolo e delle ruote.
-* **`launch_control`**: Logica di gestione della partenza assistita.
-* **`pedal_map`**: Gestione della curva di erogazione coppia.
-* **`vehicle_model`**: Modelli matematici per la validazione offline.
+Il codice è organizzato in classi indipendenti per garantire un basso accoppiamento e un'alta testabilità:
+
+* **`VehicleDynamics`**: Stima del coefficiente di attrito e calcolo del trasferimento di carico (Fz) sull'asse posteriore in tempo reale.
+* **`AdvancedSlip`**: Calcolo dello slip ratio (slittamento percentuale) con compensazione dinamica basata sull'accelerazione laterale e controlli di ridondanza sui sensori.
+* **`ElectronicDifferential`**: Calcolo dei target di velocità per i motori indipendenti (Torque Vectoring) basato sulla cinematica di Ackermann e sull'angolo di sterzo.
+* **`PIDController`**: Logica di controllo core (incluso il Launch Control) per la regolazione della coppia tramite PID, con gestione attiva dei limiti fisici di potenza (Power Limit in Watt) e corrente della batteria.
+* **`KalmanSpeedEstimator`**: Filtro per la stima pulita della velocità del veicolo riducendo il rumore dei sensori.
+
+---
+
+## 🚀 Infrastruttura CI/CD (GitHub Actions)
+
+Il progetto integra una pipeline completa che ad ogni `push` o `pull_request` garantisce la validità del codice tramite **GitHub Actions**:
+
+1.  **Build Isolata (Docker)**: Il codice viene compilato all'interno di un container Ubuntu per garantire la riproducibilità dell'ambiente.
+2.  **Compilazione Rigorosa**: Utilizzo di flag stringenti (`-Wall -Wextra -Wpedantic -Werror`). Il minimo warning blocca la build, garantendo codice sempre pulito e sicuro.
+3.  **Automated Testing (GTest)**: Esecuzione automatica della suite di test unitari sviluppata con Google Test. I risultati vengono salvati come *Artifact*.
+4.  **Automated Documentation**: Generazione automatica del sito web di documentazione (API e grafici delle chiamate) tramite **Doxygen** e Graphviz. Il sito è scaricabile come *Artifact* alla fine di ogni esecuzione.
+
+---
 
 ## 📂 Struttura del Repository
-Seguendo gli standard di ingegneria del software, la struttura è la seguente:
+
 ```text
 .
-├── src/            # Implementazioni dei moduli C++ (.cpp)
-├── include/        # Header files (.h)
-├── tests/          # Test unitari e funzionali (Google Test)
-├── matlab/         # Script e modelli Simulink (Modelli Pacejka)
+├── include/        # Header files (.h) delle classi di controllo
+├── src/            # Implementazioni dei moduli (.cpp)
+├── tests/          # Suite di unit test (unit_tests.cpp)
 ├── docker/         # Dockerfile per ambiente di build riproducibile
-├── docs/           # Documentazione tecnica e API (Doxygen)
-├── scripts/        # Utility di automazione e analisi
-└── data/           # Dataset ridotti per test di regressione
+├── .github/        # Workflow della pipeline CI/CD (main.yml)
+├── CMakeLists.txt  # Configurazione di compilazione e linking
+├── Doxyfile        # Configurazione per la generazione automatica della documentazione
+└── README.md       # Questo file
