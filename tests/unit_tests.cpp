@@ -4,6 +4,7 @@
 #include "ElectronicDifferential.h"
 #include "AdvancedSlip.h"
 #include "LaunchControl.h"
+#include "PIDController.h"
 
 // 1. TEST SUL KALMAN: Se il delta-tempo è zero, la velocità non deve cambiare
 TEST(KalmanTest, ZeroDtReturnsCurrentSpeed) {
@@ -158,6 +159,15 @@ TEST(LaunchControlTest, FindsLimitAndSavesOptimal) {
     EXPECT_TRUE(lc.isLimitReached());
     // Formula: (current - ramp) * 0.95 = (10.0 - 5.0) * 0.95 = 4.75
     EXPECT_FLOAT_EQ(lc.getOptimalTorque(), 4.75f);
+}
+
+TEST(ControlTest, PIDCurrentReduction) {
+    PIDController pid;
+    // Se lo slittamento è alto (0.5) rispetto al target (0.1), la corrente deve calare
+    float high_slip_current = pid.calculateCurrent(100.0f, 0.5f, 0.1f, 400.0f, true);
+    float low_slip_current = pid.calculateCurrent(100.0f, 0.1f, 0.1f, 400.0f, true);
+    
+    EXPECT_LT(high_slip_current, low_slip_current);
 }
 
 // Modificato: MAIN spostato alla fine (Best Practice)
