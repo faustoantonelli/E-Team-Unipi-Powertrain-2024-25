@@ -12,8 +12,6 @@ VehicleDynamics::VehicleDynamics() {}
 
 // Stima del coefficiente d'attrito
 float VehicleDynamics::estimateMu(float vSpeed_mps, float slipPercent) {
-    (void)vSpeed_mps;
-    
     float speedFactor = std::max(0.7f, 1.0f - vSpeed_mps * 0.01f);
     float slipFactor = std::max(0.8f, 1.0f - slipPercent * 0.02f);
     return p.mu_dry * speedFactor * slipFactor;
@@ -21,6 +19,9 @@ float VehicleDynamics::estimateMu(float vSpeed_mps, float slipPercent) {
 
 // Calcolo del carico sull'asse posteriore (Fz)
 float VehicleDynamics::getRearFz(float Ax, float vSpeed_mps) {
+    (void)vSpeed_mps;
+
+    
     float Fz_static = (p.mass * p.gravity * p.cg_dist_front) / p.wheelbase;
     float Fz_transfer = (p.mass * Ax * p.cg_height) / p.wheelbase;
     float totalFz = Fz_static + Fz_transfer;
