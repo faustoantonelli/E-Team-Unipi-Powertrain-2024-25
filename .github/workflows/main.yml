@@ -28,6 +28,7 @@ jobs:
       - name: Generate Documentation
         run: |
           sudo apt-get install -y doxygen graphviz
+          mkdir -p docs/doxygen
           doxygen Doxyfile
           
       - name: Upload Docs Artifact
