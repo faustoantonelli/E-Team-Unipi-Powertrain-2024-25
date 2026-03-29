@@ -17,6 +17,12 @@ jobs:
         run: |
           docker run --rm tc-test > test_report.txt
           cat test_report.txt
+
+      - name: Run Static Analysis (Clang-Tidy)
+        run: |
+          sudo apt-get install -y clang-tidy
+          # Esegue clang-tidy su tutti i file sorgenti
+          clang-tidy src/*.cpp include/*.h -- -I./include -std=c++17 || true
           
       - name: Upload Report
         uses: actions/upload-artifact@v4

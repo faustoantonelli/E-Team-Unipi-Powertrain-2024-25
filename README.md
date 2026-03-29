@@ -1,3 +1,4 @@
+![Build Status](https://github.com/faustoantonelli/E-Team-Unipi-Powertrain-2024-25/actions/workflows/main.yml/badge.svg)
 # 🏎️ E-Team Powertrain - Traction & Launch Control
 
 ![C++17](https://img.shields.io/badge/C++-17-blue.svg?style=flat-square&logo=c%2B%2B)
@@ -5,6 +6,8 @@
 ![CI/CD](https://img.shields.io/badge/CI-GitHub%20Actions-success.svg?logo=github-actions)
 ![Testing](https://img.shields.io/badge/Tests-GTest-orange.svg)
 ![Doc](https://img.shields.io/badge/Docs-Doxygen-lightgrey.svg)
+
+> **Scopo del Progetto:** Questo repository contiene un prototipo didattico e una base di sviluppo software per l'algoritmo di controllo di trazione e launch control. Sviluppato per il corso di SSPA e pensato per future integrazioni nel veicolo dell'E-Team Squadra Corse.
 
 Progetto di Sviluppo Software per il sistema di **Traction Control (TC)** e **Launch Control (LC)** della vettura dell'E-Team Squadra Corse (Università di Pisa). 
 

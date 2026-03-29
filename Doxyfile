@@ -4,7 +4,7 @@ PROJECT_NUMBER         = 1.0
 OUTPUT_DIRECTORY       = docs/doxygen
 
 # Sorgenti (Modifica qui se sposti le cartelle)
-INPUT                  = src include README.md
+INPUT                  = src include README.md docs/index.md
 RECURSIVE              = YES
 FILE_PATTERNS          = *.cpp *.h *.md
 

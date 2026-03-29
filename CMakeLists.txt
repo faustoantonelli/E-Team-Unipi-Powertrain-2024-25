@@ -38,6 +38,8 @@ target_include_directories(control_logic PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/incl
 
 # 3. Target: Eseguibile dei Test
 add_executable(unit_tests tests/unit_tests.cpp)
+add_executable(main_example src/main.cpp) 
+target_link_libraries(main_example control_logic)
 target_link_libraries(unit_tests GTest::gtest_main control_logic)
 
 include(CTest)
