@@ -17,7 +17,16 @@ private:
 public:
     // Costruttore con i parametri che avevi messo come costanti
     AdvancedSlip(float max_slip = 20.0f, float min_speed = 5.0f, float max_diff = 40.0f);
-    
+
+    /**
+     * @brief Calcola lo slittamento percentuale dell'asse posteriore.
+     * * @param vSpeed Velocità del veicolo misurata in metri al secondo [m/s].
+     * @param RLSpeed Velocità ruota posteriore sinistra in [m/s].
+     * @param RRSpeed Velocità ruota posteriore destra in [m/s].
+     * @param Ay Accelerazione laterale in [m/s^2].
+     * @return SlipResult Struttura contenente lo slittamento in percentuale [%].
+     */
+
     // Funzione principale
     SlipResult calculate(float vSpeed, float RLSpeed, float RRSpeed, float Ay);
 };

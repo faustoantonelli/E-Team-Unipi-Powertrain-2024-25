@@ -170,6 +170,58 @@ TEST(ControlTest, PIDCurrentReduction) {
     EXPECT_LT(high_slip_current, low_slip_current);
 }
 
+// --- NUOVI TEST: CASI LIMITE (EDGE CASES) ---
+
+// 5. TEST SLIP: Sensore velocità impazzito (valori negativi)
+TEST(SlipTest, NegativeSpeedHandled) {
+    AdvancedSlip slip_calc(0.15f, 2.0f, 10.0f);
+    // Passo velocità negative ai sensori (impossibile fisicamente, ma possibile se c'è un guasto)
+    SlipResult result = slip_calc.calculate(-5.0f, -10.0f, -10.0f, 0.0f);
+    
+    // Ci aspettiamo che il sistema lo gestisca bloccando il calcolo (slip 0 e nessun errore fatale)
+    EXPECT_FLOAT_EQ(result.slip_percent, 0.0f);
+    EXPECT_FALSE(result.exceeded_threshold);
+}
+
+// 6. TEST PID: Batteria staccata o in corto (Tensione = 0V)
+TEST(PIDControlTest, ZeroVoltageHandled) {
+    PIDController pid;
+    // Se la tensione è 0, il calcolo della potenza massima (P = V*I) non deve dividere per zero!
+    float current = pid.calculateCurrent(100.0f, 0.2f, 0.1f, 0.0f, true);
+    
+    // Il sistema deve restituire 0 o la corrente base senza crashare
+    EXPECT_GE(current, 0.0f); // Maggiore o uguale a 0
+}
+
+// --- NUOVO TEST: INTEGRAZIONE (INTEGRATION TEST) ---
+
+// 7. TEST INTEGRAZIONE: Accelerazione in rettilineo (Dinamica + Slip + PID)
+TEST(IntegrationTest, StraightLineAcceleration) {
+    VehicleDynamics dynamics;
+    AdvancedSlip slip_calc(0.20f, 2.0f, 10.0f);
+    PIDController pid;
+
+    // SCENARIO: Auto a 20 m/s (72 km/h), accelerazione 1.5g, ruote posteriori slittano a 24 m/s
+    float v_speed_mps = 20.0f;
+    float ax_mps2 = 1.5f * 9.81f; // 1.5g
+    float wheel_speed_mps = 24.0f; // Slittamento evidente
+    float battery_voltage = 350.0f;
+
+    // Step 1: Calcolo dinamica (trasferimento di carico, qui non blocca il test ma verifica che si istanzi)
+    float Fz = dynamics.getRearFz(ax_mps2, v_speed_mps);
+    EXPECT_GT(Fz, 0.0f); // Il carico deve essere positivo
+
+    // Step 2: Calcolo slip
+    SlipResult slip = slip_calc.calculate(v_speed_mps, wheel_speed_mps, wheel_speed_mps, 0.0f);
+    EXPECT_GT(slip.slip_percent, 10.0f); // Deve rilevare uno slip maggiore del 10%
+
+    // Step 3: Il PID deve tagliare la corrente perché lo slip è alto (target 10%)
+    float current = pid.calculateCurrent(100.0f, slip.slip_percent / 100.0f, 0.10f, battery_voltage, true);
+    
+    // Corrente base per pps 100% è circa 210A, col taglio PID deve essere decisamente minore
+    EXPECT_LT(current, 200.0f); 
+}
+
 // Modificato: MAIN spostato alla fine (Best Practice)
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
