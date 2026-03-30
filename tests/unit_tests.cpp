@@ -170,8 +170,6 @@ TEST(ControlTest, PIDCurrentReduction) {
     EXPECT_LT(high_slip_current, low_slip_current);
 }
 
-// --- NUOVI TEST: CASI LIMITE (EDGE CASES) ---
-
 // 5. TEST SLIP: Sensore velocità impazzito (valori negativi)
 TEST(SlipTest, NegativeSpeedHandled) {
     AdvancedSlip slip_calc(0.15f, 2.0f, 10.0f);
@@ -192,8 +190,6 @@ TEST(PIDControlTest, ZeroVoltageHandled) {
     // Il sistema deve restituire 0 o la corrente base senza crashare
     EXPECT_GE(current, 0.0f); // Maggiore o uguale a 0
 }
-
-// --- NUOVO TEST: INTEGRAZIONE (INTEGRATION TEST) ---
 
 // 7. TEST INTEGRAZIONE: Accelerazione in rettilineo (Dinamica + Slip + PID)
 TEST(IntegrationTest, StraightLineAcceleration) {
@@ -222,7 +218,6 @@ TEST(IntegrationTest, StraightLineAcceleration) {
     EXPECT_LT(current, 200.0f); 
 }
 
-// Modificato: MAIN spostato alla fine (Best Practice)
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

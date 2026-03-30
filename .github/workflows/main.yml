@@ -21,7 +21,6 @@ jobs:
       - name: Run Static Analysis (Clang-Tidy)
         run: |
           sudo apt-get install -y clang-tidy
-          # Esegue clang-tidy su tutti i file sorgenti
           clang-tidy src/*.cpp include/*.h -- -I./include -std=c++17 || true
           
       - name: Upload Report
